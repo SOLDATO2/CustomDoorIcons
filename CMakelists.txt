@@ -1,0 +1,32 @@
+# CMakeLists.txt
+cmake_minimum_required(VERSION 3.15)
+project(CustomDoorIcons CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Encontrar OpenCV
+find_package(OpenCV REQUIRED)
+if(NOT OpenCV_FOUND)
+    message(FATAL_ERROR "OpenCV não encontrado!")
+endif()
+
+# Encontrar wxWidgets
+find_package(wxWidgets REQUIRED COMPONENTS core base)
+if(NOT wxWidgets_FOUND)
+    message(FATAL_ERROR "wxWidgets não encontrado!")
+endif()
+
+# Adicionar o executável
+add_executable(${PROJECT_NAME} src/main.cpp src/TabOne.cpp src/TabTwo.cpp)
+
+# Adicionar diretórios de inclusão
+target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+# Definir propriedades específicas para MSVC (Visual Studio)
+if (MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+endif()
+
+# Linkar o executável com as dependências
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} ${wxWidgets_LIBRARIES})
