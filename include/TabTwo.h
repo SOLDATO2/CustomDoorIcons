@@ -2,7 +2,6 @@
 #ifndef TABTWO_H
 #define TABTWO_H
 #include <wx/notebook.h>
-
 #include <wx/wx.h>
 #include <wx/clrpicker.h>
 #include <string>

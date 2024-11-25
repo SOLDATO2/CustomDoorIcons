@@ -1,59 +1,11 @@
 // src/TabTwo.cpp
 #include "TabTwo.h"
-#include <opencv2/opencv.hpp>
-#include <iostream>
-#include <wx/notebook.h>
+#include "ImageProcessor.h" // Incluir o cabeçalho centralizado
+#include <wx/filedlg.h>
 #include <wx/clipbrd.h>
+#include <iostream>
 
-// Função para processar a imagem e gerar a string HTML
-std::string imageToProcessedHTML(const std::string& imagePath, int width) {
-    cv::Mat img = cv::imread(imagePath);
-    if (img.empty()) {
-        std::cerr << "Error, could not load image!" << std::endl;
-        return "";
-    }
-    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);  // Converter para RGB
-
-    // Calcular o novo tamanho mantendo a proporção
-    double aspectRatio = static_cast<double>(img.rows) / img.cols;
-    int newHeight = static_cast<int>(aspectRatio * width * 0.55);
-    cv::resize(img, img, cv::Size(width, newHeight));
-
-    // Gerar a string HTML
-    std::string htmlOutput;
-    const std::string blockChar = "█"; // Caractere de bloco completo
-
-    htmlOutput += "<size=2>";
-    for (int y = 0; y < img.rows; y++) {
-        std::string currentColor = "";
-        for (int x = 0; x < img.cols; x++) {
-            cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
-            int r = pixel[0], g = pixel[1], b = pixel[2];
-            char hexColor[8];
-            snprintf(hexColor, sizeof(hexColor), "#%02X%02X%02X", r, g, b);
-
-            std::string hexColorStr(hexColor);
-
-            // Verificar se a cor atual é diferente da anterior para agrupar caracteres
-            if (currentColor != hexColorStr) {
-                if (!currentColor.empty()) {
-                    htmlOutput += "</color>";
-                }
-                currentColor = hexColorStr;
-                htmlOutput += "<color=" + currentColor + ">";
-            }
-            htmlOutput += blockChar;
-        }
-        if (!currentColor.empty()) {
-            htmlOutput += "</color>";
-        }
-        htmlOutput += "\\n"; // Inserir a sequência de caracteres \n
-    }
-    htmlOutput += "</size>";
-
-    return htmlOutput;
-}
-
+// Construtor da classe TabTwo
 TabTwo::TabTwo(wxNotebook* parent) : wxPanel(parent, wxID_ANY) {
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -78,23 +30,24 @@ TabTwo::TabTwo(wxNotebook* parent) : wxPanel(parent, wxID_ANY) {
 
     SetSizer(mainSizer);
 
-    // Binds dos eventos
+    // Bind dos eventos
     selectImageButton->Bind(wxEVT_BUTTON, &TabTwo::OnSelectImageButtonClicked, this);
     processButton->Bind(wxEVT_BUTTON, &TabTwo::OnProcessButtonClicked, this);
 }
 
+// Evento para o botão "Selecionar Imagem"
 void TabTwo::OnSelectImageButtonClicked(wxCommandEvent& event) {
     wxFileDialog openFileDialog(
         this,
-        _("Selecione uma imagem"),
+        _("Select an image"),
         "",
         "",
-        "Imagens (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
+        "Images (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
         wxFD_OPEN | wxFD_FILE_MUST_EXIST
     );
 
     if (openFileDialog.ShowModal() == wxID_CANCEL) {
-        wxMessageBox("Nenhuma imagem foi selecionada.", "Aviso", wxOK | wxICON_INFORMATION);
+        wxMessageBox("You didn't select an image.", "Warning", wxOK | wxICON_INFORMATION);
         return;
     }
 
@@ -102,9 +55,10 @@ void TabTwo::OnSelectImageButtonClicked(wxCommandEvent& event) {
     imagePathCtrl->SetValue(openFileDialog.GetPath());
 }
 
+// Evento para o botão "Processar"
 void TabTwo::OnProcessButtonClicked(wxCommandEvent& event) {
     if (imagePath.empty()) {
-        wxMessageBox("Por favor, selecione uma imagem primeiro.", "Aviso", wxOK | wxICON_WARNING);
+        wxMessageBox("Please select an image first.", "Warning", wxOK | wxICON_WARNING);
         return;
     }
 
@@ -112,31 +66,31 @@ void TabTwo::OnProcessButtonClicked(wxCommandEvent& event) {
     try {
         width = std::stoi(widthCtrl->GetValue().ToStdString());
     }
-    catch (const std::exception& e) {
-        wxMessageBox("Entrada inválida para largura.", "Erro", wxOK | wxICON_ERROR);
+    catch (const std::exception&) {
+        wxMessageBox("Invalid width provided. Please enter a valid number.", "Error", wxOK | wxICON_ERROR);
         return;
     }
 
     if (width < 10 || width > 300) {
-        wxMessageBox("Largura inválida fornecida. Deve estar entre 10 e 300.", "Erro", wxOK | wxICON_ERROR);
+        wxMessageBox("Width must be between 10 and 300.", "Error", wxOK | wxICON_ERROR);
         return;
     }
 
-    //Gerar o HTML processado a partir da imagem
-    std::string processedHTML = imageToProcessedHTML(imagePath, width);
+    // Gerar o HTML processado a partir da imagem
+    wxString processedHTML = imageToProcessedHTML(imagePath, width);
 
-    //Converter a string para wxString usando UTF-8
-    wxString wxProcessedHTML = wxString::FromUTF8(processedHTML);
+    // Encapsular o conteúdo dentro das tags <size=2> e </size>
+    wxString finalOutput = "<size=2>" + processedHTML + "</size>";
 
-    //Copiar a string para o clipboard
+    // Copiar a saída para o clipboard
     if (wxTheClipboard->Open()) {
-        //Criar um objeto de dados de texto com a string Unicode
-        wxTextDataObject* data = new wxTextDataObject(wxProcessedHTML);
+        // Criar um objeto de dados de texto com a string Unicode
+        wxTextDataObject* data = new wxTextDataObject(finalOutput);
         wxTheClipboard->SetData(data);
         wxTheClipboard->Close();
-        wxMessageBox("Copied to clipboard.", "Sucesso", wxOK | wxICON_INFORMATION);
+        wxMessageBox("Copied to clipboard.", "Success", wxOK | wxICON_INFORMATION);
     }
     else {
-        wxMessageBox("Could not access clipboard.", "Erro", wxOK | wxICON_ERROR);
+        wxMessageBox("Could not access clipboard.", "Error", wxOK | wxICON_ERROR);
     }
 }

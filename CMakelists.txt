@@ -18,7 +18,7 @@ if(NOT wxWidgets_FOUND)
 endif()
 
 # Adicionar o executável
-add_executable(${PROJECT_NAME} src/main.cpp src/TabOne.cpp src/TabTwo.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/TabOne.cpp src/TabTwo.cpp src/ImageProcessor.cpp)
 
 # Adicionar diretórios de inclusão
 target_include_directories(${PROJECT_NAME} PRIVATE include)
