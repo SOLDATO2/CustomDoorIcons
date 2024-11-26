@@ -1,23 +1,27 @@
-// include/TabTwo.h
-#ifndef TABTWO_H
-#define TABTWO_H
-#include <wx/notebook.h>
+// TabTwo.h
+#ifndef TAB_TWO_H
+#define TAB_TWO_H
 
 #include <wx/wx.h>
-#include <wx/clrpicker.h>
+#include <wx/notebook.h>
+#include <vector>
 #include <string>
+#include <wx/scrolwin.h> // Inclua esta linha para usar wxScrolledWindow
 
-class TabTwo : public wxPanel {
+// Estrutura para armazenar os controles de cada entrada
+struct TabTwoEntryControls {
+    wxTextCtrl* textField;
+};
+
+class TabTwo : public wxScrolledWindow {
 public:
     TabTwo(wxNotebook* parent);
 
 private:
-    wxTextCtrl* imagePathCtrl;
-    wxTextCtrl* widthCtrl;
-    std::string imagePath;
+    void OnSaveButtonClicked(wxCommandEvent& event);
 
-    void OnSelectImageButtonClicked(wxCommandEvent& event);
-    void OnProcessButtonClicked(wxCommandEvent& event);
+    std::vector<TabTwoEntryControls> entries;
+    std::vector<std::string> labels;
 };
 
-#endif // TABTWO_H
+#endif // TAB_TWO_H
