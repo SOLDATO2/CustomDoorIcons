@@ -28,8 +28,8 @@ bool MyApp::OnInit() {
     TabTwo* tabTwo = new TabTwo(notebook);
 
     // Adicionar as abas ao notebook
-    notebook->AddPage(tabOne, "Aba 1");
-    notebook->AddPage(tabTwo, "Aba 2");
+    notebook->AddPage(tabOne, "Door settings");
+    notebook->AddPage(tabTwo, "Team names");
 
     // Configurar o sizer da janela principal e ajustar o tamanho
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);

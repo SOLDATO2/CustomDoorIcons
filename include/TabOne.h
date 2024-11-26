@@ -9,7 +9,7 @@
 #include <wx/notebook.h>
 
 // Estrutura para armazenar os controles de cada entrada
-struct EntryControls {
+struct TabOneEntryControls {
     wxTextCtrl* textField;
     wxTextCtrl* sizeField;
     wxColourPickerCtrl* colorPicker;
@@ -24,13 +24,13 @@ public:
     TabOne(wxNotebook* parent);
 
 private:
-    std::vector<EntryControls> entries;
-    std::vector<std::string> labels;
-    std::vector<wxColour> defaultColors;
-
-    void OnSaveButtonClicked(wxCommandEvent& event);
     void OnSelectImageButtonClicked(size_t index);
     void OnResetImageButtonClicked(size_t index);
+    void OnSaveButtonClicked(wxCommandEvent& event);
+
+    std::vector<TabOneEntryControls> entries;
+    std::vector<std::string> labels;
+    std::vector<wxColour> defaultColors;
 };
 
 #endif // TABONE_H

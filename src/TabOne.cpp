@@ -2,8 +2,9 @@
 #include "TabOne.h"
 #include "ImageProcessor.h" // Incluir o cabeçalho centralizado
 #include <wx/filedlg.h>
-#include <wx/clipbrd.h>
+#include <wx/file.h>       // Para manipulação de arquivos
 #include <iostream>
+
 
 // Construtor da classe TabOne
 TabOne::TabOne(wxNotebook* parent) : wxPanel(parent, wxID_ANY) {
@@ -67,16 +68,16 @@ TabOne::TabOne(wxNotebook* parent) : wxPanel(parent, wxID_ANY) {
         fieldsSizer->Add(isTextCheckBox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
         // Botão para selecionar a imagem
-        wxButton* selectImageButton = new wxButton(this, wxID_ANY, "📷"); // Usando emoji de câmera como ícone
+        wxButton* selectImageButton = new wxButton(this, wxID_ANY, "Select Image");
         fieldsSizer->Add(selectImageButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
         // Botão para resetar a imagem (inicialmente escondido)
-        wxButton* resetImageButton = new wxButton(this, wxID_ANY, "❌"); // Usando emoji de X como ícone
+        wxButton* resetImageButton = new wxButton(this, wxID_ANY, "Reset");
         resetImageButton->Hide();
         fieldsSizer->Add(resetImageButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
         // Armazenar os controles
-        EntryControls controls = { textField, sizeField, colorPicker, isTextCheckBox, selectImageButton, resetImageButton, "" };
+        TabOneEntryControls controls = { textField, sizeField, colorPicker, isTextCheckBox, selectImageButton, resetImageButton, "" };
         entries.push_back(controls);
 
         // Adicionar os campos ao sizer horizontal
@@ -171,7 +172,8 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
         if (!entries[i].imagePath.empty()) {
             // Processar como imagem
             std::string imagePath = entries[i].imagePath;
-            int width = 0;
+            int width = 80; // Valor padrão de largura
+
             try {
                 width = std::stoi(entries[i].sizeField->GetValue().ToStdString());
             }
@@ -186,7 +188,7 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
             }
 
             // Gerar HTML processado da imagem
-            entryContent = imageToProcessedHTML(imagePath, width=80);
+            entryContent = imageToProcessedHTML(imagePath, width);
         } else {
             // Processar como texto
             wxString text = entries[i].textField->GetValue();
@@ -216,13 +218,30 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
         output += entryContent + "\n";
     }
 
-    // Copiar para o clipboard
-    if (wxTheClipboard->Open()) {
-        wxTextDataObject* data = new wxTextDataObject(output);
-        wxTheClipboard->SetData(data);
-        wxTheClipboard->Close();
-        wxMessageBox("Copied to clipboard", "Success", wxOK | wxICON_INFORMATION);
+    // Exibir o diálogo de salvamento
+    wxFileDialog saveFileDialog(
+        this,
+        _("Save Doors.txt file"),
+        "",
+        "Doors.txt",
+        "Text files (*.txt)|*.txt",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT
+    );
+
+    if (saveFileDialog.ShowModal() == wxID_CANCEL) {
+        // O usuário cancelou a operação de salvamento
+        return;
+    }
+
+    wxString filePath = saveFileDialog.GetPath();
+
+    // Salvar o conteúdo no arquivo especificado
+    wxFile file;
+    if (file.Open(filePath, wxFile::write)) {
+        file.Write(output);
+        file.Close();
+        wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
     } else {
-        wxMessageBox("Could not access clipboard.", "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);
     }
 }
