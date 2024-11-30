@@ -1,5 +1,4 @@
 [requires]
-opencv/4.10.0
 wxwidgets/3.2.6
 [generators]
 CMakeDeps

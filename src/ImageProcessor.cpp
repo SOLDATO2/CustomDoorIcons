@@ -1,34 +1,33 @@
-// src/ImageProcessor.cpp
 #include "ImageProcessor.h"
-#include <opencv2/opencv.hpp>
+#include <wx/wx.h>
+#include <wx/image.h>
 #include <iostream>
 
-// Implementação da função para processar a imagem e gerar HTML
+// Implementação da função para processar a imagem e gerar HTML usando wxImage
 wxString imageToProcessedHTML(const std::string& imagePath, int width) {
-    cv::Mat img = cv::imread(imagePath);
-    if (img.empty()) {
+    wxImage img;
+    if (!img.LoadFile(wxString::FromUTF8(imagePath.c_str()))) {
         std::cerr << "Error, could not load image: " << imagePath << std::endl;
         return "";
     }
 
-    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);  // Converter para RGB
-
     // Calcular o novo tamanho mantendo a proporção
-    double aspectRatio = static_cast<double>(img.rows) / img.cols;
+    double aspectRatio = static_cast<double>(img.GetHeight()) / img.GetWidth();
     int newHeight = static_cast<int>(aspectRatio * width * 0.55);
-    cv::resize(img, img, cv::Size(width, newHeight));
+    img.Rescale(width, newHeight, wxIMAGE_QUALITY_HIGH);
 
     // Iniciar a string HTML com <size=2>
     wxString htmlOutput = "<size=2>";
 
-    for (int y = 0; y < img.rows; y++) {
+    for (int y = 0; y < img.GetHeight(); y++) {
         wxString currentColor = "";
-        for (int x = 0; x < img.cols; x++) {
-            cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
-            int r = pixel[0], g = pixel[1], b = pixel[2];
+        for (int x = 0; x < img.GetWidth(); x++) {
+            unsigned char r = img.GetRed(x, y);
+            unsigned char g = img.GetGreen(x, y);
+            unsigned char b = img.GetBlue(x, y);
+
             char hexColor[8];
             snprintf(hexColor, sizeof(hexColor), "#%02X%02X%02X", r, g, b);
-
             wxString hexColorStr(hexColor);
 
             // Verificar se a cor atual é diferente da anterior para agrupar caracteres
@@ -47,7 +46,7 @@ wxString imageToProcessedHTML(const std::string& imagePath, int width) {
         }
 
         // Adicionar \n no final de cada linha, exceto na última
-        if (y != img.rows - 1) {
+        if (y != img.GetHeight() - 1) {
             htmlOutput += "\\n";
         }
     }

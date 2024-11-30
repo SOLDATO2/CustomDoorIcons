@@ -5,11 +5,6 @@ project(CustomDoorIcons CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Encontrar OpenCV
-find_package(OpenCV REQUIRED)
-if(NOT OpenCV_FOUND)
-    message(FATAL_ERROR "OpenCV não encontrado!")
-endif()
 
 # Encontrar wxWidgets
 find_package(wxWidgets REQUIRED COMPONENTS core base)
@@ -29,4 +24,4 @@ if (MSVC)
 endif()
 
 # Linkar o executável com as dependências
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} ${wxWidgets_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})
