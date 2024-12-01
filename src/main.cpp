@@ -2,6 +2,7 @@
 #include <wx/wx.h>
 #include "TabOne.h"
 #include "TabTwo.h"
+#include "TabThree.h"
 #include <wx/notebook.h>
 
 // Classe principal da aplicação wxWidgets
@@ -26,10 +27,12 @@ bool MyApp::OnInit() {
     // Criar as duas abas
     TabOne* tabOne = new TabOne(notebook);
     TabTwo* tabTwo = new TabTwo(notebook);
+    TabThree* tabThree = new TabThree(notebook);
 
     // Adicionar as abas ao notebook
     notebook->AddPage(tabOne, "Door settings");
     notebook->AddPage(tabTwo, "Team names");
+    notebook->AddPage(tabThree, "Intercom");
 
     // Configurar o sizer da janela principal e ajustar o tamanho
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
