@@ -6,7 +6,7 @@
 #include <wx/notebook.h>
 #include <vector>
 #include <string>
-#include <wx/scrolwin.h> // Inclua esta linha para usar wxScrolledWindow
+#include <wx/scrolwin.h>
 
 // Estrutura para armazenar os controles de cada entrada
 struct TabTwoEntryControls {
