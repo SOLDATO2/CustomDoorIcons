@@ -1,11 +1,32 @@
+// TabFour.cpp
 #include "TabFour.h"
+#include <wx/filedlg.h>
 #include <wx/file.h>
+#include <wx/msgdlg.h>
+#include <wx/txtstrm.h>
+#include <wx/statline.h>
+#include <wx/wfstream.h>
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
+#include <iostream>
 
-// Construtor da classe TabFour
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
+
+    wxColour backgroundColor(30, 30, 30);
+    wxColour textColor(*wxWHITE);
+    wxColour buttonColor(70, 70, 70);
+    wxColour textCtrlBg(50, 50, 50);
+    wxColour textCtrlFg(*wxWHITE);
+
+    SetBackgroundColour(backgroundColor);
+
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Inicialização do vetor items com IDs específicos
+
     items = {
         {0, "Janitor Keycard", ""},
         {1, "Scientist Keycard", ""},
@@ -67,72 +88,104 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     wxBoxSizer* entriesSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Criação dos controles de entrada para cada item
+   
     for (const auto& item : items) {
-        wxBoxSizer* entrySizer = new wxBoxSizer(wxVERTICAL);
 
-        // Rótulo com o nome do item
-        wxString label = wxString::Format("%s\nName:", item.name);
-        wxStaticText* nameLabel = new wxStaticText(this, wxID_ANY, label);
-        entrySizer->Add(nameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+        wxBoxSizer* itemSizer = new wxBoxSizer(wxVERTICAL);
 
-        // Campo de texto para o nome
-        wxTextCtrl* nameField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_PROCESS_ENTER);
-        entrySizer->Add(nameField, 0, wxEXPAND | wxBOTTOM, 10);
+        // Name
+        wxStaticText* itemNameLabel = new wxStaticText(this, wxID_ANY, wxString::FromUTF8(item.name.c_str()));
+        itemNameLabel->SetForegroundColour(textColor);
 
-        wxTextCtrl* descriptionField = nullptr; // Inicialmente nullptr
+        itemNameLabel->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
 
-        // Verifica se o item possui descrição
+        itemSizer->Add(itemNameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+
+        // Name Field
+        wxStaticText* nameLabel = new wxStaticText(this, wxID_ANY, "Name:");
+        nameLabel->SetForegroundColour(textColor);
+        nameLabel->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+
+        itemSizer->Add(nameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+
+        wxTextCtrl* nameField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
+            wxTE_PROCESS_ENTER);
+        nameField->SetBackgroundColour(textCtrlBg);
+        nameField->SetForegroundColour(textCtrlFg);
+        nameField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+
+        itemSizer->Add(nameField, 0, wxEXPAND | wxBOTTOM, 10);
+
+        wxTextCtrl* descriptionField = nullptr; 
+
         if (!item.description.empty()) {
-            // Rótulo para a descrição
-            wxStaticText* descriptionLabel = new wxStaticText(this, wxID_ANY, "Description:");
-            entrySizer->Add(descriptionLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+  
+            wxStaticText* descLabel = new wxStaticText(this, wxID_ANY, "Description:");
+            descLabel->SetForegroundColour(textColor);
+            descLabel->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
 
-            // Campo de texto para a descrição
-            descriptionField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_PROCESS_ENTER);
-            entrySizer->Add(descriptionField, 0, wxEXPAND | wxBOTTOM, 10);
+            itemSizer->Add(descLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+
+            descriptionField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
+                wxTE_PROCESS_ENTER);
+            descriptionField->SetBackgroundColour(textCtrlBg);
+            descriptionField->SetForegroundColour(textCtrlFg);
+            descriptionField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+
+            itemSizer->Add(descriptionField, 0, wxEXPAND | wxBOTTOM, 10);
         }
 
-        // Armazena os controles de entrada
-        TabFourEntryControls controls = { nameField, descriptionField };
-        entries.push_back(controls);
 
-        entriesSizer->Add(entrySizer, 0, wxEXPAND | wxALL, 10);
+        wxStaticLine* separator = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
+        separator->SetForegroundColour(textColor);
+        separator->SetBackgroundColour(textColor);
+        itemSizer->Add(separator, 0, wxEXPAND | wxTOP, 5);
+
+
+        entriesSizer->Add(itemSizer, 0, wxEXPAND | wxALL, 10);
+
+
+        TabFourEntryControls controls;
+        controls.nameField = nameField;
+        controls.descriptionField = descriptionField;
+        entries.push_back(controls);
     }
 
     mainSizer->Add(entriesSizer, 1, wxEXPAND | wxALL, 10);
 
-    // Botão de salvar
     wxButton* saveButton = new wxButton(this, wxID_ANY, "Save");
+    saveButton->SetBackgroundColour(buttonColor);
+    saveButton->SetForegroundColour(textColor);
+    saveButton->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+
     mainSizer->Add(saveButton, 0, wxALIGN_CENTER | wxALL, 10);
 
-    // Vincula o evento do botão de salvar
     saveButton->Bind(wxEVT_BUTTON, &TabFour::OnSaveButtonClicked, this);
 
-    SetSizerAndFit(mainSizer);
+    SetSizer(mainSizer);
+    SetScrollRate(20, 20);
 
-    // Habilitar scroll
-    SetScrollRate(10, 10);
+    Layout();
+
+    FitInside();
 }
 
-void TabFour::OnSaveButtonClicked(wxCommandEvent& event){
+
+void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
     wxString output;
     for (size_t it = 0; it < items.size(); ++it){
         const auto& item = items[it];
         const auto& controls = entries[it];
 
-        // Obtém o valor do campo de nome
         wxString nameText = controls.nameField->GetValue();
         if (nameText.IsEmpty()) {
             nameText = wxString::FromUTF8(item.name.c_str());
         }
 
-        // Inicia a linha com ID e nome
         output += wxString::Format("%d~%s", item.id, nameText);
 
-        // Se o item possui descrição, adiciona a descrição
         if (item.description.empty()) {
-            // Não há descrição
+
             output += "\n";
         } else {
             wxString descText = controls.descriptionField->GetValue();
@@ -143,7 +196,7 @@ void TabFour::OnSaveButtonClicked(wxCommandEvent& event){
         }
     }
 
-    // Diálogo para salvar o arquivo
+
     wxFileDialog saveFileDialog(
         this,
         _("Save Items.txt file"),
@@ -154,17 +207,20 @@ void TabFour::OnSaveButtonClicked(wxCommandEvent& event){
     );
 
     if (saveFileDialog.ShowModal() == wxID_CANCEL) {
-        return; // Usuário cancelou a operação
+        return;
     }
 
     wxString filePath = saveFileDialog.GetPath();
 
-    wxFile file;
-    if (file.Open(filePath, wxFile::write)){
-        file.Write(output);
-        file.Close();
-        wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
-    } else {
+
+    wxFileOutputStream outputStream(filePath);
+    if (!outputStream.IsOk()){
         wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);
+        return;
     }
+
+    wxTextOutputStream textStream(outputStream, wxEOL_NATIVE, wxConvUTF8);
+    textStream.WriteString(output);
+
+    wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
 }

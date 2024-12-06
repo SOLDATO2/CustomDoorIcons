@@ -1,3 +1,4 @@
+// TabThree.h
 #ifndef TABTHREE_H
 #define TABTHREE_H
 
@@ -8,10 +9,10 @@
 
 struct TabThreeEntryControls {
     wxTextCtrl* textField;
-    wxCheckBox* isTextCheckBox;
+    wxCheckBox* addTimerCheckBox;
 };
 
-class TabThree : public wxPanel {
+class TabThree : public wxScrolledWindow {
 public:
     TabThree(wxNotebook* parent);
 private:

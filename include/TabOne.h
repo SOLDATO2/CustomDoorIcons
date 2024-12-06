@@ -1,4 +1,4 @@
-// include/TabOne.h
+// TabOne.h
 #ifndef TABONE_H
 #define TABONE_H
 
@@ -8,18 +8,17 @@
 #include <string>
 #include <wx/notebook.h>
 
-// Estrutura para armazenar os controles de cada entrada
 struct TabOneEntryControls {
     wxTextCtrl* textField;
     wxTextCtrl* sizeField;
     wxColourPickerCtrl* colorPicker;
-    wxCheckBox* isTextCheckBox;
+    wxCheckBox* ignoreSizeCheckBox;
     wxButton* selectImageButton;
     wxButton* resetImageButton;
     std::string imagePath;
 };
 
-class TabOne : public wxPanel {
+class TabOne : public wxScrolledWindow {
 public:
     TabOne(wxNotebook* parent);
 

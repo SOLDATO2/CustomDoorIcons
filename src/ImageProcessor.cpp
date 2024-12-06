@@ -3,7 +3,6 @@
 #include <wx/image.h>
 #include <iostream>
 
-// Implementação da função para processar a imagem e gerar HTML usando wxImage
 wxString imageToProcessedHTML(const std::string& imagePath, int width) {
     wxImage img;
     if (!img.LoadFile(wxString::FromUTF8(imagePath.c_str()))) {
@@ -11,12 +10,10 @@ wxString imageToProcessedHTML(const std::string& imagePath, int width) {
         return "";
     }
 
-    // Calcular o novo tamanho mantendo a proporção
     double aspectRatio = static_cast<double>(img.GetHeight()) / img.GetWidth();
     int newHeight = static_cast<int>(aspectRatio * width * 0.55);
     img.Rescale(width, newHeight, wxIMAGE_QUALITY_HIGH);
 
-    // Iniciar a string HTML com <size=2>
     wxString htmlOutput = "<size=2>";
 
     for (int y = 0; y < img.GetHeight(); y++) {
@@ -30,7 +27,6 @@ wxString imageToProcessedHTML(const std::string& imagePath, int width) {
             snprintf(hexColor, sizeof(hexColor), "#%02X%02X%02X", r, g, b);
             wxString hexColorStr(hexColor);
 
-            // Verificar se a cor atual é diferente da anterior para agrupar caracteres
             if (currentColor != hexColorStr) {
                 if (!currentColor.IsEmpty()) {
                     htmlOutput += "</color>";
@@ -39,19 +35,17 @@ wxString imageToProcessedHTML(const std::string& imagePath, int width) {
                 htmlOutput += "<color=" + currentColor + ">";
             }
 
-            htmlOutput += L"\u2588";  // Usar o caractere Unicode para '█'
+            htmlOutput += L"\u2588";  // '█'
         }
         if (!currentColor.IsEmpty()) {
             htmlOutput += "</color>";
         }
 
-        // Adicionar \n no final de cada linha, exceto na última
         if (y != img.GetHeight() - 1) {
             htmlOutput += "\\n";
         }
     }
 
-    // Adicionar </size> no final da última linha
     htmlOutput += "</size>";
 
     return htmlOutput;
