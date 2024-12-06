@@ -1,14 +1,13 @@
 // TabTwo.h
-#ifndef TAB_TWO_H
-#define TAB_TWO_H
+#ifndef TABTWO_H
+#define TABTWO_H
 
 #include <wx/wx.h>
 #include <wx/notebook.h>
 #include <vector>
 #include <string>
-#include <wx/scrolwin.h> // Inclua esta linha para usar wxScrolledWindow
+#include <wx/scrolwin.h>
 
-// Estrutura para armazenar os controles de cada entrada
 struct TabTwoEntryControls {
     wxTextCtrl* textField;
 };
@@ -24,4 +23,4 @@ private:
     std::vector<std::string> labels;
 };
 
-#endif // TAB_TWO_H
+#endif // TABTWO_H

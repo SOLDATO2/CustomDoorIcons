@@ -1,10 +1,11 @@
-// src/main.cpp
+// main.cpp
 #include <wx/wx.h>
 #include "TabOne.h"
 #include "TabTwo.h"
+#include "TabThree.h"
+#include "TabFour.h"
 #include <wx/notebook.h>
 
-// Classe principal da aplicação wxWidgets
 class MyApp : public wxApp {
 public:
     virtual bool OnInit();
@@ -12,30 +13,42 @@ public:
 
 wxIMPLEMENT_APP(MyApp);
 
+// main.cpp
 bool MyApp::OnInit() {
-    // Inicializar todos os manipuladores de imagem do wxWidgets
     wxInitAllImageHandlers();
 
-    // Criar a janela principal
-    wxFrame* frame = new wxFrame(nullptr, wxID_ANY, "Custom Door Icons", wxDefaultPosition, wxDefaultSize);
+    // create window with dark background
+    wxFrame* frame = new wxFrame(nullptr, wxID_ANY, "Custom Door Icons", wxDefaultPosition, wxDefaultSize,
+        wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
+    frame->SetBackgroundColour(wxColour(30, 30, 30)); // Fundo escuro
+
     SetTopWindow(frame);
 
-    // Criar o notebook (abas)
+    //notebook
     wxNotebook* notebook = new wxNotebook(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNB_TOP);
+    notebook->SetBackgroundColour(wxColour(30, 30, 30));
+    notebook->SetForegroundColour(*wxWHITE);
 
-    // Criar as duas abas
+    // windows
     TabOne* tabOne = new TabOne(notebook);
     TabTwo* tabTwo = new TabTwo(notebook);
+    TabThree* tabThree = new TabThree(notebook);
+    TabFour* tabFour = new TabFour(notebook);
 
-    // Adicionar as abas ao notebook
-    notebook->AddPage(tabOne, "Door settings");
-    notebook->AddPage(tabTwo, "Team names");
+    // adding windows to notebook
+    notebook->AddPage(tabOne, "Door Settings");
+    notebook->AddPage(tabTwo, "Team Names");
+    notebook->AddPage(tabThree, "Intercom");
+    notebook->AddPage(tabFour, "Items");
 
-    // Configurar o sizer da janela principal e ajustar o tamanho
+    // sizer config
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(notebook, 1, wxEXPAND | wxALL, 10);
-    frame->SetSizerAndFit(mainSizer); // Ajusta o tamanho da janela para caber todo o conteúdo
+    frame->SetSizer(mainSizer);
+
+    // default window size
+    frame->SetSize(800, 600); // 800px, 600px
 
     frame->Show(true);
-    return true; // Iniciar o loop de eventos
+    return true; //loop
 }
