@@ -107,9 +107,9 @@ sudo chmod +x CustomDoorIconsLinux
 ./CustomDoorIconsLinux
 
 ### **Tab Names Disappear When Clicked / Typed Text Isn't Showing Up / Buttons Do Not Have Text**
-Cause: This issue typically occurs when using a light theme. CustomDoorIcons isn't fully compatible with light themes because the text color (white) blends into the background, making it appear invisible.
+This issue typically occurs when using a light theme. CustomDoorIcons isn't fully compatible with light themes because the text color (white) blends into the background, making it appear invisible.
 
-Solution: Change your system theme to a dark theme. This will ensure that all text elements are visible. Future updates may address compatibility with light themes.
+Change your system theme to a dark theme. This will ensure that all text elements are visible. Future updates may address compatibility with light themes.
 
 ### **Fonts Aren't Appearing in Team Names/Door Settings**
-Cause: The fonts used in the Team Names and Door Settings tabs are purely visual and are currently only available on Windows. This is because Windows provides a library to load hard-coded fonts, which isn't natively available on Linux.
+The fonts used in the Team Names and Door Settings tabs are purely visual and are currently only available on Windows. This is because Windows provides a library to load hard-coded fonts, which isn't natively available on Linux.
