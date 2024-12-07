@@ -4,6 +4,10 @@
 
 This project is inspired by [html-image-to-scpsl-image](https://github.com/dooory/html-image-to-scpsl-image).
 
+# Download
+
+Head over to the releases page to download the executable file.
+
 # Showcase
 
 ## Windows
