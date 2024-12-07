@@ -1,6 +1,6 @@
 # Introduction
 
-**CustomDoorIcons** is a program designed to simplify and centralize the process of customizing the names, descriptions, and icons of multiple in-game objects that have associated text. No external websites are everything is done within the app!
+**CustomDoorIcons** is a program designed to simplify and centralize the process of customizing the names, descriptions, and icons of multiple in-game objects that have associated text. No external websites are necessary everything is done within the app!
 
 This project is inspired by [html-image-to-scpsl-image](https://github.com/dooory/html-image-to-scpsl-image).
 
