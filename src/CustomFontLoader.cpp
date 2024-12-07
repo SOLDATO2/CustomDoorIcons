@@ -1,7 +1,7 @@
 // CustomFontLoader.cpp
 #include "CustomFontLoader.h"
-#include "OliversBarney.h"
-#include "RobotoBold.h"
+#include "fonts/OliversBarney.h"
+#include "fonts/RobotoBold.h"
 
 #ifdef _WIN32
 #include <windows.h>

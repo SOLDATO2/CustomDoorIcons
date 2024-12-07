@@ -11,7 +11,7 @@
 
 
 // Definição de constantes para nomes das fontes
-const std::string ROBOTO_BOLD = "Roboto-Bold"; // Nome lógico definido no CustomFontLoader
+const std::string ROBOTO_BOLD = "Roboto Bold"; // Nome lógico definido no CustomFontLoader
 
 // Construtor da classe TabOne
 TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
