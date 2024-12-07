@@ -8,7 +8,11 @@
 #include <wx/wfstream.h>
 #include <iostream>
 
+const std::string OLIVERS_BARNEY_REGULAR = "OliversBarney-Regular"; // Nome lógico definido no CustomFontLoader
+
+// Construtor da classe TabTwo
 TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
+    // Define cores para o tema escuro
     wxColour backgroundColor(30, 30, 30);
     wxColour textColor(*wxWHITE);
     wxColour buttonColor(70, 70, 70);
@@ -19,6 +23,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
+    // Inicializar labels
     labels = {
         "SCP-173",
         "Class-D Personnel",
@@ -51,34 +56,32 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     wxBoxSizer* entriesSizer = new wxBoxSizer(wxVERTICAL);
 
+    // Carregar a fonte personalizada
     bool fontLoaded = LoadCustomFonts();
 
     if (!fontLoaded) {
-        wxLogWarning("Falha ao carregar a fonte personalizada. Usando fonte padrão.");
+        wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
     }
 
-    wxString customFontName = "OliversBarney-Regular";
-
+    // Criação dos controles de entrada para cada label
     for (size_t i = 0; i < labels.size(); ++i) {
         if (labels[i] == "-") {
-            continue;
+            continue; // Ignorar entradas com "-"
         }
 
         wxBoxSizer* entrySizer = new wxBoxSizer(wxVERTICAL);
 
+        // Label acima do campo de texto
         wxStaticText* label = new wxStaticText(this, wxID_ANY, labels[i]);
         label->SetForegroundColour(textColor);
 
+        // Aplicar a fonte OliversBarney-Regular somente se fontLoaded for verdadeiro
         if (fontLoaded) {
-
-            std::string oliversBarneyName = "OliversBarney-Regular";
-
-            wxFont customFont = GetCustomFont(oliversBarneyName, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-
+            wxFont customFont = GetCustomFont(OLIVERS_BARNEY_REGULAR, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             if (customFont.IsOk()) {
                 label->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte personalizada ao label.");
+                wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao label.");
                 label->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {
@@ -87,19 +90,19 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         entrySizer->Add(label, 0, wxALIGN_LEFT | wxALL, 5);
 
+        // Campo de texto
         wxTextCtrl* textField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
             wxTE_PROCESS_ENTER);
         textField->SetBackgroundColour(textCtrlBg);
         textField->SetForegroundColour(textCtrlFg);
 
+        // Aplicar a fonte OliversBarney-Regular ao campo de texto
         if (fontLoaded) {
-            std::string oliversBarneyName = "OliversBarney-Regular";
-
-            wxFont customFont = GetCustomFont(oliversBarneyName, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            wxFont customFont = GetCustomFont(OLIVERS_BARNEY_REGULAR, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             if (customFont.IsOk()) {
                 textField->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte personalizada ao campo de texto.");
+                wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao campo de texto.");
                 textField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {
@@ -108,14 +111,17 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         entrySizer->Add(textField, 0, wxEXPAND | wxALL, 5);
 
+        // Armazenar o controle
         TabTwoEntryControls controls = { textField };
         entries.push_back(controls);
 
+        // Adicionar a entrada ao sizer principal
         entriesSizer->Add(entrySizer, 0, wxEXPAND | wxALL, 2);
     }
 
     mainSizer->Add(entriesSizer, 1, wxEXPAND | wxALL, 10);
 
+    // Botão "Salvar"
     wxButton* saveButton = new wxButton(this, wxID_ANY, "Save");
     saveButton->SetBackgroundColour(buttonColor);
     saveButton->SetForegroundColour(textColor);
@@ -124,15 +130,18 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     SetSizer(mainSizer);
     SetScrollRate(10, 10);
 
+    // Bind do evento do botão "Salvar"
     saveButton->Bind(wxEVT_BUTTON, &TabTwo::OnSaveButtonClicked, this);
 }
 
+// Evento para o botão "Salvar"
 void TabTwo::OnSaveButtonClicked(wxCommandEvent& event) {
     wxString output;
 
     for (size_t i = 0; i < entries.size(); i++) {
         wxString text = entries[i].textField->GetValue();
 
+        // Se o campo estiver vazio, usamos o rótulo padrão
         if (text.IsEmpty()) {
             text = wxString::FromUTF8(labels[i].c_str());
         }
@@ -140,6 +149,7 @@ void TabTwo::OnSaveButtonClicked(wxCommandEvent& event) {
         output += text + "\n";
     }
 
+    // Diálogo para salvar o arquivo
     wxFileDialog saveFileDialog(
         this,
         _("Save Classes_Names.txt file"),
@@ -150,11 +160,12 @@ void TabTwo::OnSaveButtonClicked(wxCommandEvent& event) {
     );
 
     if (saveFileDialog.ShowModal() == wxID_CANCEL) {
-        return;
+        return; // O usuário cancelou a operação
     }
 
     wxString filePath = saveFileDialog.GetPath();
 
+    // Salvar com codificação UTF-8
     wxFileOutputStream outputStream(filePath);
     if (!outputStream.IsOk()) {
         wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);

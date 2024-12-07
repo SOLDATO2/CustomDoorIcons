@@ -45,27 +45,32 @@ bool LoadCustomFonts() {
     g_fontsLoaded = true;
     return g_fontsLoaded;
 #else
-    // linux isnt supported rn so we just return this message
-    wxLogWarning("Fonts aren't supported in linux yet. Using default fonts.");
-    return false;
+
+    fontNameMap["Roboto-Bold"] = "Roboto Bold";
+    fontNameMap["OliversBarney-Regular"] = "OliversBarney-Regular";
+
+    g_fontsLoaded = true;
+    return g_fontsLoaded;
 #endif
 }
 
 wxFont GetCustomFont(const std::string& fontName, int pointSize, wxFontFamily family, wxFontStyle style, wxFontWeight weight) {
     if (!g_fontsLoaded) {
-        wxLogWarning("Fonts weren't loaded, callling LoadCustomFonts().");
+        wxLogWarning("Fontes personalizadas não foram carregadas. Chamando LoadCustomFonts().");
         LoadCustomFonts();
     }
 
+    // Verifica se a fonte solicitada foi carregada/mapeada
     if (fontNameMap.find(fontName) == fontNameMap.end()) {
-        wxLogWarning("Couldn't find font '%s'. Using default.", fontName.c_str());
+        wxLogWarning("Fonte personalizada '%s' não encontrada. Usando fonte padrão.", fontName.c_str());
         return wxFont(pointSize, family, style, weight);
     }
 
-    wxFont customFont(pointSize, family, style, weight, false, wxString::FromUTF8(fontName.c_str()));
+    // Cria a fonte usando o nome da fonte do sistema
+    wxFont customFont(pointSize, family, style, weight, false, wxString::FromUTF8(fontNameMap[fontName].c_str()));
 
     if (!customFont.IsOk()) {
-        wxLogWarning("Failed to load font '%s'. Using default.", fontName.c_str());
+        wxLogWarning("Falha ao criar a fonte personalizada '%s'. Usando fonte padrão.", fontName.c_str());
         return wxFont(pointSize, family, style, weight);
     }
 
