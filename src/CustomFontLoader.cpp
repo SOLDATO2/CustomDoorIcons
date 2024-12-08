@@ -32,8 +32,7 @@ bool LoadCustomFonts() {
         DWORD numFontsAdded;
         HANDLE fontHandle = AddFontMemResourceEx((void*)font.data, font.length, NULL, &numFontsAdded);
         if (fontHandle) {
-            //wxLogMessage("Fonte personalizada '%s' carregada com sucesso. Número de fontes adicionadas: %u", 
-            //            font.name.c_str(), numFontsAdded);
+
             fontNameMap[font.name] = font.name;
         } else {
             DWORD error = GetLastError();

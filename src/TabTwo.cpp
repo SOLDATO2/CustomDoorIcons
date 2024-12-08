@@ -1,7 +1,7 @@
 // TabTwo.cpp
 #include "TabTwo.h"
 #include "CustomFontLoader.h"
-#include "icons.h"
+#include "IconsCharacters.h"
 #include <wx/filedlg.h>
 #include <wx/file.h>
 #include <wx/msgdlg.h>
@@ -24,7 +24,6 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Inicializar labels
     labels = {
         "SCP-173",
         "Class-D Personnel",
@@ -135,22 +134,19 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {"Spectator", {generic_png, generic_png_len}}
     };
 
-    // Definição dos grupos
     std::vector<std::string> group1; // SCP-
     std::vector<std::string> group2; // Class-D Personnel e Scientist
     std::vector<std::string> group3; // Nine-Tailed Fox Sergeant, Captain, Private, Facility Guard, Specialist
     std::vector<std::string> group4; // Chaos Insurgency Conscript, Rifleman, Marauder, Repressor
     std::vector<std::string> group5; // Outros (incluindo "-")
 
-    // Categorizar os labels nos grupos apropriados
     for (size_t i = 0; i < labels.size(); ++i) {
         const std::string& label = labels[i];
 
         if (label == "-") {
-            continue; // Não adiciona "-" a nenhum grupo para que não seja exibido na GUI
+            continue;
         }
 
-        // Não ignore labels que são "-"
         if (label.substr(0, 4) == "SCP-") {
             group1.push_back(label);
         }
@@ -175,12 +171,9 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         }
     }
 
-    // Função lambda para criar controles de entrada com ícone próximo ao label e acima do textfield
     auto CreateEntryControls = [&](const std::string& labelStr, size_t originalIndex) -> wxBoxSizer* {
-        // Usar wxBoxSizer vertical para header (label + ícone) e textfield
         wxBoxSizer* entrySizer = new wxBoxSizer(wxVERTICAL);
 
-        // Criar sizer horizontal para label e ícone
         wxBoxSizer* headerSizer = new wxBoxSizer(wxHORIZONTAL);
 
         wxStaticText* label = new wxStaticText(this, wxID_ANY, labelStr);
