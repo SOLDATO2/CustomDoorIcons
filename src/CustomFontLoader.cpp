@@ -48,7 +48,7 @@ bool LoadCustomFonts() {
     fontNameMap["Roboto-Bold"] = "Roboto Bold";
     fontNameMap["OliversBarney-Regular"] = "OliversBarney-Regular";
 
-    g_fontsLoaded = true;
+    g_fontsLoaded = false;
     return g_fontsLoaded;
 #endif
 }

@@ -55,7 +55,7 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     bool fontsLoaded = LoadCustomFonts();
 
     if (!fontsLoaded) {
-        wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
+        //wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
     }
 
     for (size_t i = 0; i < labels.size(); ++i) {
@@ -69,7 +69,7 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (customFont.IsOk()) {
                 label->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao label.");
+                //wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao label.");
                 label->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
             }
         } else {
@@ -90,7 +90,7 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (customFont.IsOk()) {
                 textField->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de texto.");
+                //wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de texto.");
                 textField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {
@@ -109,7 +109,7 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (customFont.IsOk()) {
                 sizeField->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de tamanho.");
+                //wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de tamanho.");
                 sizeField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {

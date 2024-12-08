@@ -36,7 +36,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     bool fontLoaded = LoadCustomFonts();
 
     if (!fontLoaded) {
-        wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
+        //wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
     }
 
     items = {
@@ -196,7 +196,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 iconBitmap = wxBitmap(resizedImage);
             }
             else {
-                wxLogWarning("Failed to load image to: %s", item.name);
+                //wxLogWarning("Failed to load image to: %s", item.name);
             }
         }
 
@@ -213,7 +213,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         if (fontLoaded) {
             nameLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (!nameLabelFont.IsOk()) {
-                wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
+                //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
                 nameLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             }
         }
@@ -232,7 +232,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         if (fontLoaded) {
             nameFieldFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             if (!nameFieldFont.IsOk()) {
-                wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
+                //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
                 nameFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             }
         }
@@ -253,7 +253,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (fontLoaded) {
                 descLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 if (!descLabelFont.IsOk()) {
-                    wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
+                    //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
                     descLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 }
             }
@@ -272,7 +272,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (fontLoaded) {
                 descFieldFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
                 if (!descFieldFont.IsOk()) {
-                    wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Description.");
+                    //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Description.");
                     descFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
                 }
             }

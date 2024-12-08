@@ -64,7 +64,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     bool fontLoaded = LoadCustomFonts();
 
     if (!fontLoaded) {
-        wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
+        //wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
     }
 
     // Mapeamento de cores para cada label específico
@@ -212,7 +212,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 iconBitmap = wxBitmap(resizedImage);
             }
             else {
-                wxLogWarning("Falha ao carregar a imagem para o label: %s", labelStr);
+                //wxLogWarning("Falha ao carregar a imagem para o label: %s", labelStr);
             }
         }
 
@@ -234,7 +234,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 textField->SetFont(customFont);
             }
             else {
-                wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao campo de texto.");
+                //wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao campo de texto.");
                 textField->SetFont(wxFont(15, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         }
@@ -260,7 +260,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 title->SetFont(customFont);
             }
             else {
-                wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao título do grupo.");
+                //wxLogWarning("Falha ao aplicar a fonte OliversBarney-Regular ao título do grupo.");
                 title->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
             }
         }
