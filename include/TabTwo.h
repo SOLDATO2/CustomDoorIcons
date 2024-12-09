@@ -19,7 +19,6 @@ public:
 
 private:
     void OnSaveButtonClicked(wxCommandEvent& event);
-    void TestFormattedText(wxCommandEvent& event);
     std::string EscapeXML(const std::string& text);
     std::string GetFormattedText(wxRichTextCtrl* ctrl, const wxColour& defaultColor);
     std::string ColourToHex(const wxColour& color);
@@ -27,7 +26,6 @@ private:
     std::vector<TabTwoEntryControls> entries;
     std::vector<std::string> labels;
 
-    // Variáveis de cor como membros para acesso global
     wxColour backgroundColor;
     wxColour textColor;
     wxColour buttonColor;
