@@ -108,7 +108,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {"Research Supervisor Keycard", {__researchkeycard_png, __researchkeycard_png_len}},
         {"Zone Manager Keycard", {__zonemanagerkeycard_png, __zonemanagerkeycard_png_len}},
         {"Guard Keycard", {__guardkeycard_png, __guardkeycard_png_len}},
-        {"MTF Private Keycard", {__operativekeycard_png, __operativekeycard_png_len}},
+        {"MTF Private Keycard", {privatekeycard_png, privatekeycard_png_len}},
         {"Containment Engineer Keycard", {cengineerkeycard_png, cengineerkeycard_png_len}},
         {"MTF Operative Keycard", {__operativekeycard_png, __operativekeycard_png_len}},
         {"MTF Captain Keycard", {__captainkeycard_png, __captainkeycard_png_len}},

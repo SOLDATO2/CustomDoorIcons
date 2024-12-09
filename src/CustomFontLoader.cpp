@@ -59,13 +59,11 @@ wxFont GetCustomFont(const std::string& fontName, int pointSize, wxFontFamily fa
         LoadCustomFonts();
     }
 
-    // Verifica se a fonte solicitada foi carregada/mapeada
     if (fontNameMap.find(fontName) == fontNameMap.end()) {
         wxLogWarning("Font '%s' not found, using default", fontName.c_str());
         return wxFont(pointSize, family, style, weight);
     }
 
-    // Cria a fonte usando o nome da fonte do sistema
     wxFont customFont(pointSize, family, style, weight, false, wxString::FromUTF8(fontNameMap[fontName].c_str()));
 
     if (!customFont.IsOk()) {

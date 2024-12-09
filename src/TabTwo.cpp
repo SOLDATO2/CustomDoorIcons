@@ -38,7 +38,6 @@ std::string TabTwo::EscapeXML(const std::string& text) {
 }
 
 std::string TabTwo::GetFormattedText(wxRichTextCtrl* ctrl, const wxColour& defaultColor) {
-    // ive spent 5 hours trying to figure this out and it still feels so sketchy to me
     std::stringstream formattedText;
     long length = ctrl->GetLastPosition();
 
@@ -135,10 +134,6 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     bool fontLoaded = LoadCustomFonts();
 
-    if (!fontLoaded) {
-        // Font loading failed, proceeding with default fonts
-    }
-
     std::unordered_map<std::string, wxColour> labelColors = {
         {"SCP-173", wxColour(236, 34, 34)},
         {"SCP-079", wxColour(236, 34, 34)},
@@ -167,26 +162,17 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     };
 
     std::unordered_map<std::string, std::pair<const unsigned char*, unsigned int>> labelIcons = {
-        // Civilians
         {"Class-D Personnel", {classdicon_png, classdicon_png_len}},
         {"Scientist", {scientisticon_png, scientisticon_png_len}},
-
-        // Facility Guard
         {"Facility Guard", {guardicon_png, guardicon_png_len}},
-
-        // Chaos Insurgency
         {"Chaos Insurgency Conscript", {chaosicon_png, chaosicon_png_len}},
         {"Chaos Insurgency Rifleman", {chaosicon_png, chaosicon_png_len}},
         {"Chaos Insurgency Marauder", {chaosicon_png, chaosicon_png_len}},
         {"Chaos Insurgency Repressor", {chaosicon_png, chaosicon_png_len}},
-
-        // Nine-Tailed Fox
         {"Nine-Tailed Fox Specialist", {mtficon_png, mtficon_png_len}},
         {"Nine-Tailed Fox Sergeant", {mtficon_png, mtficon_png_len}},
         {"Nine-Tailed Fox Captain", {mtficon_png, mtficon_png_len}},
         {"Nine-Tailed Fox Private", {mtficon_png, mtficon_png_len}},
-
-        // SCPs
         {"SCP-173", {scp173_png, scp173_png_len}},
         {"SCP-079", {scp079_png, scp079_png_len}},
         {"SCP-106", {scp106_png, scp106_png_len}},
@@ -198,19 +184,17 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {"SCP-1507", {scp1507_png, scp1507_png_len}},
         {"SCP-1507-Alpha", {scp1507_png, scp1507_png_len}},
         {"SCP-1507-049", {scp1507_png, scp1507_png_len}},
-
-        // Others
         {"Tutorial", {generic_png, generic_png_len}},
         {"Overwatch", {generic_png, generic_png_len}},
         {"Filmmaker", {generic_png, generic_png_len}},
         {"Spectator", {generic_png, generic_png_len}}
     };
 
-    std::vector<std::string> group1; // SCP-
-    std::vector<std::string> group2; // Class-D Personnel e Scientist
-    std::vector<std::string> group3; // Nine-Tailed Fox Sergeant, Captain, Private, Facility Guard, Specialist
-    std::vector<std::string> group4; // Chaos Insurgency Conscript, Rifleman, Marauder, Repressor
-    std::vector<std::string> group5; // Outros (incluindo "-")
+    std::vector<std::string> group1;
+    std::vector<std::string> group2;
+    std::vector<std::string> group3;
+    std::vector<std::string> group4;
+    std::vector<std::string> group5;
 
     for (size_t i = 0; i < labels.size(); ++i) {
         const std::string& label = labels[i];
@@ -244,13 +228,13 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         }
     }
 
-    // Função lambda para criar controles de entrada com wxRichTextCtrl
     auto CreateEntryControls = [&](const std::string& labelStr, size_t originalIndex) -> wxBoxSizer* {
+        if (labelStr == "-") return nullptr;
+
         wxBoxSizer* entrySizer = new wxBoxSizer(wxVERTICAL);
 
         wxBoxSizer* headerSizer = new wxBoxSizer(wxHORIZONTAL);
 
-        // Label
         wxStaticText* label = new wxStaticText(this, wxID_ANY, labelStr);
 
         auto it = labelColors.find(labelStr);
@@ -276,7 +260,6 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         headerSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
 
-        // icon
         wxBitmap iconBitmap;
         auto iconIt = labelIcons.find(labelStr);
         if (iconIt != labelIcons.end()) {
@@ -286,9 +269,6 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 wxImage resizedImage = image.Scale(30, 30, wxIMAGE_QUALITY_HIGH);
                 iconBitmap = wxBitmap(resizedImage);
             }
-            else {
-                // failed to load image
-            }
         }
 
         if (iconBitmap.IsOk()) {
@@ -296,14 +276,14 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             headerSizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
         }
 
-        wxButton* colorButton = new wxButton(this, wxID_ANY, "Cor");
+        wxButton* colorButton = new wxButton(this, wxID_ANY, "Color");
         colorButton->SetBackgroundColour(buttonColor);
         colorButton->SetForegroundColour(textColor);
         headerSizer->Add(colorButton, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
 
         entrySizer->Add(headerSizer, 0, wxALIGN_LEFT | wxBOTTOM, 5);
 
-        wxRichTextCtrl* richTextCtrl = new wxRichTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 100), wxRE_MULTILINE | wxBORDER_SUNKEN);
+        MyRichTextCtrl* richTextCtrl = new MyRichTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
         richTextCtrl->SetBackgroundColour(textCtrlBg);
         richTextCtrl->SetForegroundColour(textCtrlFg);
 
@@ -324,7 +304,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         defaultStyle.SetTextColour(textCtrlFg);
         richTextCtrl->SetDefaultStyle(defaultStyle);
 
-        richTextCtrl->SetMinSize(wxSize(-1, 100));
+        richTextCtrl->SetMinSize(wxSize(-1, 50));
 
         entrySizer->Add(richTextCtrl, 0, wxEXPAND | wxBOTTOM, 10);
 
@@ -356,7 +336,14 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     };
 
     auto AddGroupToSizer = [&](const std::vector<std::string>& group, wxBoxSizer* parentSizer, const std::string& groupTitle) {
-        if (group.empty()) return;
+        bool hasValidLabels = false;
+        for (const auto& label : group) {
+            if (label != "-") {
+                hasValidLabels = true;
+                break;
+            }
+        }
+        if (!hasValidLabels) return;
 
         wxStaticText* title = new wxStaticText(this, wxID_ANY, groupTitle);
         title->SetForegroundColour(wxColour(255, 255, 255));
@@ -377,6 +364,7 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         wxBoxSizer* groupSizer = new wxBoxSizer(wxVERTICAL);
         for (const auto& labelStr : group) {
+            if (labelStr == "-") continue;
             size_t originalIndex = 0;
             for (; originalIndex < labels.size(); ++originalIndex) {
                 if (labels[originalIndex] == labelStr) {
@@ -386,7 +374,9 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
             if (originalIndex < labels.size()) {
                 wxBoxSizer* entrySizer = CreateEntryControls(labelStr, originalIndex);
-                groupSizer->Add(entrySizer, 0, wxEXPAND | wxALL, 2);
+                if (entrySizer) {
+                    groupSizer->Add(entrySizer, 0, wxEXPAND | wxALL, 2);
+                }
             }
         }
 
