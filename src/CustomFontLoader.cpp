@@ -1,7 +1,7 @@
 // CustomFontLoader.cpp
 #include "CustomFontLoader.h"
-#include "OliversBarney.h"
-#include "RobotoBold.h"
+#include "fonts/OliversBarney.h"
+#include "fonts/RobotoBold.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -32,8 +32,7 @@ bool LoadCustomFonts() {
         DWORD numFontsAdded;
         HANDLE fontHandle = AddFontMemResourceEx((void*)font.data, font.length, NULL, &numFontsAdded);
         if (fontHandle) {
-            //wxLogMessage("Fonte personalizada '%s' carregada com sucesso. Número de fontes adicionadas: %u", 
-            //            font.name.c_str(), numFontsAdded);
+
             fontNameMap[font.name] = font.name;
         } else {
             DWORD error = GetLastError();
@@ -49,28 +48,26 @@ bool LoadCustomFonts() {
     fontNameMap["Roboto-Bold"] = "Roboto Bold";
     fontNameMap["OliversBarney-Regular"] = "OliversBarney-Regular";
 
-    g_fontsLoaded = true;
+    g_fontsLoaded = false; //false by default because linux has skill issue with fonts
     return g_fontsLoaded;
 #endif
 }
 
 wxFont GetCustomFont(const std::string& fontName, int pointSize, wxFontFamily family, wxFontStyle style, wxFontWeight weight) {
     if (!g_fontsLoaded) {
-        wxLogWarning("Fontes personalizadas não foram carregadas. Chamando LoadCustomFonts().");
+        wxLogWarning("custom fonts didnt load, calling LoadCustomFonts().");
         LoadCustomFonts();
     }
 
-    // Verifica se a fonte solicitada foi carregada/mapeada
     if (fontNameMap.find(fontName) == fontNameMap.end()) {
-        wxLogWarning("Fonte personalizada '%s' não encontrada. Usando fonte padrão.", fontName.c_str());
+        wxLogWarning("Font '%s' not found, using default", fontName.c_str());
         return wxFont(pointSize, family, style, weight);
     }
 
-    // Cria a fonte usando o nome da fonte do sistema
     wxFont customFont(pointSize, family, style, weight, false, wxString::FromUTF8(fontNameMap[fontName].c_str()));
 
     if (!customFont.IsOk()) {
-        wxLogWarning("Falha ao criar a fonte personalizada '%s'. Usando fonte padrão.", fontName.c_str());
+        wxLogWarning("couldnt create custom font '%s'. using default font.", fontName.c_str());
         return wxFont(pointSize, family, style, weight);
     }
 

@@ -1,5 +1,7 @@
 // TabFour.cpp
 #include "TabFour.h"
+#include "CustomFontLoader.h"
+#include "IconsItems.h"
 #include <wx/filedlg.h>
 #include <wx/file.h>
 #include <wx/msgdlg.h>
@@ -8,24 +10,104 @@
 #include <wx/wfstream.h>
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
+#include <wx/mstream.h>
+#include <wx/colourdata.h>
+#include <wx/colordlg.h>
 #include <iostream>
+#include <string>
+#include <unordered_map>
+#include <sstream>
+#include <iomanip>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+const std::string ROBOTO_BOLD = "Roboto Bold";
+
+std::string TabFour::ColourToHex(const wxColour& color) {
+    wxString hex = wxString::Format("#%02X%02X%02X", color.Red(), color.Green(), color.Blue());
+    return std::string(hex.mb_str());
+}
+
+std::string TabFour::EscapeXML(const std::string& text) {
+    std::string escaped;
+    for (char c : text) {
+        switch(c) {
+            case '&': escaped += "&amp;"; break;
+            case '<': escaped += "&lt;"; break;
+            case '>': escaped += "&gt;"; break;
+            case '"': escaped += "&quot;"; break;
+            case '\'': escaped += "&apos;"; break;
+            default: escaped += c;
+        }
+    }
+    return escaped;
+}
+
+std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl, const wxColour& defaultColor) {
+    std::stringstream formattedText;
+    long length = ctrl->GetLastPosition();
+
+    if (length == 0) {
+        return formattedText.str();
+    }
+
+    long pos = 0;
+
+    while (pos < length) {
+        wxTextAttr attr;
+        ctrl->GetStyle(pos, attr);
+        wxColour currentColor = attr.GetTextColour();
+
+        long runStart = pos;
+        while (pos < length) {
+            wxTextAttr runAttr;
+            ctrl->GetStyle(pos, runAttr);
+            wxColour runColor = runAttr.GetTextColour();
+
+            if (runColor != currentColor) {
+                break;
+            }
+            pos++;
+        }
+        long runEnd = pos;
+
+        wxString runTextWx = ctrl->GetRange(runStart, runEnd);
+        std::string runText = std::string(runTextWx.mb_str());
+
+        std::string escapedText = EscapeXML(runText);
+
+        bool colorsDiffer = (currentColor != defaultColor);
+
+        if (colorsDiffer) {
+            formattedText << "<color=" << ColourToHex(currentColor) << ">" << escapedText << "</color>";
+        }
+        else {
+            formattedText << escapedText;
+        }
+    }
+
+    return formattedText.str();
+}
 
 TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
-
-    wxColour backgroundColor(30, 30, 30);
-    wxColour textColor(*wxWHITE);
-    wxColour buttonColor(70, 70, 70);
-    wxColour textCtrlBg(50, 50, 50);
-    wxColour textCtrlFg(*wxWHITE);
+    backgroundColor = wxColour(30, 30, 30);
+    textColor = *wxWHITE;
+    buttonColor = wxColour(70, 70, 70);
+    textCtrlBg = wxColour(50, 50, 50);
+    #ifdef _WIN32
+    textCtrlFg = *wxBLACK;
+    #elif __linux__
+    textCtrlFg = wxColour(247, 247, 247); // #F7F7F7
+    #else
+    textCtrlFg = *wxWHITE; // another os
+    #endif
 
     SetBackgroundColour(backgroundColor);
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
+    bool fontLoaded = LoadCustomFonts();
+
+    if (!fontLoaded) {
+    }
 
     items = {
         {0, "Janitor Keycard", ""},
@@ -86,69 +168,273 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {60, "Tape Player", "Contains an unlabeled tape. Please don’t play it. Please."}
     };
 
+    entries.resize(items.size(), TabFourEntryControls{nullptr, nullptr, nullptr, nullptr});
+
     wxBoxSizer* entriesSizer = new wxBoxSizer(wxVERTICAL);
 
-   
-    for (const auto& item : items) {
+    std::unordered_map<std::string, std::pair<const unsigned char*, unsigned int>> itemIcons = {
+        {"Janitor Keycard", {__janitorkeycard_png, __janitorkeycard_png_len}},
+        {"Scientist Keycard", {__scientistkeycard_png, __scientistkeycard_png_len}},
+        {"Research Supervisor Keycard", {__researchkeycard_png, __researchkeycard_png_len}},
+        {"Zone Manager Keycard", {__zonemanagerkeycard_png, __zonemanagerkeycard_png_len}},
+        {"Guard Keycard", {__guardkeycard_png, __guardkeycard_png_len}},
+        {"MTF Private Keycard", {privatekeycard_png, privatekeycard_png_len}},
+        {"Containment Engineer Keycard", {cengineerkeycard_png, cengineerkeycard_png_len}},
+        {"MTF Operative Keycard", {__operativekeycard_png, __operativekeycard_png_len}},
+        {"MTF Captain Keycard", {__captainkeycard_png, __captainkeycard_png_len}},
+        {"Facility Manager Keycard", {__facilitymanagerkeycard_png, __facilitymanagerkeycard_png_len}},
+        {"Chaos Insurgency Access Device", {__chaosinsurgencydevice_png, __chaosinsurgencydevice_png_len}},
+        {"O5-level Keycard", {__o5keycard_png, __o5keycard_png_len}},
+        {"Radio", {__radio_png, __radio_png_len}},
+        {"COM-15", {__com15_png, __com15_png_len}},
+        {"First Aid Kit", {__medkit_png, __medkit_png_len}},
+        {"Flashlight", {__flashlight_png, __flashlight_png_len}},
+        {"Micro H.I.D.", {__micro_png, __micro_png_len}},
+        {"SCP-500", {scp500_png, scp500_png_len}},
+        {"SCP-207", {scp207_png, scp207_png_len}},
+        {"MTF-E11-SR", {__e11_png, __e11_png_len}},
+        {"Crossvec", {__crossvec_png, __crossvec_png_len}},
+        {"FSP-9", {__fsp_png, __fsp_png_len}},
+        {"Logicer", {__logicer_png, __logicer_png_len}},
+        {"High-Explosive Grenade", {__granade_png, __granade_png_len}},
+        {"Flashbang Grenade", {__flashbang_png, __flashbang_png_len}},
+        {"COM-18", {__com18_png, __com18_png_len}},
+        {"SCP-018", {scp018_png, scp018_png_len}},
+        {"SCP-268", {scp268_png, scp268_png_len}},
+        {"Adrenaline", {__adrenaline_png, __adrenaline_png_len}},
+        {"Painkillers", {__painkillers_png, __painkillers_png_len}},
+        {"Coin", {__coin_png, __coin_png_len}},
+        {"Light Armor", {__lightarmor_png, __lightarmor_png_len}},
+        {"Combat Armor", {__combatarmor_png, __combatarmor_png_len}},
+        {".44 Revolver", {__revolver_png, __revolver_png_len}},
+        {"AK", {__ak_png, __ak_png_len}},
+        {"Heavy Armor", {__heavyarmor_png, __heavyarmor_png_len}},
+        {"Shotgun", {__shotgun_png, __shotgun_png_len}},
+        {"Bag of Candies", {__bagofcandies_png, __bagofcandies_png_len}},
+        {"SCP-2176", {scp2176_png, scp2176_png_len}},
+        {"SCP-244-A", {scp244A_png, scp244A_png_len}},
+        {"SCP-244-B", {scp244B_png, scp244B_png_len}},
+        {"SCP-1853", {scp1853_png, scp1853_png_len}},
+        {"3-X Particle Disruptor", {__particledisruptor_png, __particledisruptor_png_len}},
+        {"COM-45", {__com45_png, __com45_png_len}},
+        {"SCP-1576", {scp1576_png, scp1576_png_len}},
+        {"Jailbird", {__jailbird_png, __jailbird_png_len}},
+        {"Anti-Cola", {antiscp207_png, antiscp207_png_len}},
+        {"FR-MG-0", {__frmg_png, __frmg_png_len}},
+        {"A7", {__a7_png, __a7_png_len}},
+        {"Lantern", {__lantern_png, __lantern_png_len}},
+        //{"SCP-1344", {__scp1344_png, __scp1344_png_len}}, // no icon yet
+        {"Snowball", {__snowball_png, __snowball_png_len}},
+        {"Coal", {__coal_png, __coal_png_len}},
+        {"Coal?", {__coal_png, __coal_png_len}},
+        {"Tape Player?", {__tapeplayer_png, __tapeplayer_png_len}},
+        {"Tape Player", {__tapeplayer_png, __tapeplayer_png_len}},
+    };
+
+    for (size_t i = 0; i < items.size(); ++i) {
+        const auto& item = items[i];
 
         wxBoxSizer* itemSizer = new wxBoxSizer(wxVERTICAL);
 
-        // Name
+        wxBoxSizer* headerSizer = new wxBoxSizer(wxHORIZONTAL);
+
         wxStaticText* itemNameLabel = new wxStaticText(this, wxID_ANY, wxString::FromUTF8(item.name.c_str()));
         itemNameLabel->SetForegroundColour(textColor);
 
-        itemNameLabel->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+        wxFont customLabelFont;
+        if (fontLoaded) {
+            customLabelFont = GetCustomFont(ROBOTO_BOLD, 20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            if (!customLabelFont.IsOk()) {
+                wxLogWarning("Failed to apply '%s' at: %s", ROBOTO_BOLD.c_str(), item.name.c_str());
+                customLabelFont = wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            }
+        }
+        else {
+            customLabelFont = wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+        }
+        itemNameLabel->SetFont(customLabelFont);
 
-        itemSizer->Add(itemNameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+        headerSizer->Add(itemNameLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
 
-        // Name Field
-        wxStaticText* nameLabel = new wxStaticText(this, wxID_ANY, "Name:");
-        nameLabel->SetForegroundColour(textColor);
-        nameLabel->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
-
-        itemSizer->Add(nameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
-
-        wxTextCtrl* nameField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
-            wxTE_PROCESS_ENTER);
-        nameField->SetBackgroundColour(textCtrlBg);
-        nameField->SetForegroundColour(textCtrlFg);
-        nameField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-
-        itemSizer->Add(nameField, 0, wxEXPAND | wxBOTTOM, 10);
-
-        wxTextCtrl* descriptionField = nullptr; 
-
-        if (!item.description.empty()) {
-  
-            wxStaticText* descLabel = new wxStaticText(this, wxID_ANY, "Description:");
-            descLabel->SetForegroundColour(textColor);
-            descLabel->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
-
-            itemSizer->Add(descLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
-
-            descriptionField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
-                wxTE_PROCESS_ENTER);
-            descriptionField->SetBackgroundColour(textCtrlBg);
-            descriptionField->SetForegroundColour(textCtrlFg);
-            descriptionField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-
-            itemSizer->Add(descriptionField, 0, wxEXPAND | wxBOTTOM, 10);
+        wxBitmap iconBitmap;
+        auto iconIt = itemIcons.find(item.name);
+        if (iconIt != itemIcons.end()) {
+            wxMemoryInputStream imgStream(iconIt->second.first, iconIt->second.second);
+            wxImage image(imgStream, wxBITMAP_TYPE_PNG);
+            if (image.IsOk()) {
+                wxImage resizedImage = image.Scale(45, 45, wxIMAGE_QUALITY_HIGH);
+                iconBitmap = wxBitmap(resizedImage);
+            }
+            else {
+                wxLogWarning("Failed to load icon to: %s", item.name.c_str());
+            }
         }
 
+        if (iconBitmap.IsOk()) {
+            wxStaticBitmap* icon = new wxStaticBitmap(this, wxID_ANY, iconBitmap);
+            headerSizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL);
+        }
+
+        itemSizer->Add(headerSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+        wxBoxSizer* nameSizer = new wxBoxSizer(wxHORIZONTAL);
+
+        wxStaticText* nameLabel = new wxStaticText(this, wxID_ANY, "Name:");
+        nameLabel->SetForegroundColour(textColor);
+
+        wxFont nameLabelFont;
+        if (fontLoaded) {
+            nameLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            if (!nameLabelFont.IsOk()) {
+                wxLogWarning("Failed to apply '%s' at: Nome.", ROBOTO_BOLD.c_str());
+                nameLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            }
+        }
+        else {
+            nameLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+        }
+        nameLabel->SetFont(nameLabelFont);
+
+        nameSizer->Add(nameLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+        MyRichTextCtrlTabFour* nameField = new MyRichTextCtrlTabFour(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
+        nameField->SetBackgroundColour(textCtrlBg);
+        nameField->SetForegroundColour(textCtrlFg);
+
+        if (fontLoaded) {
+            wxFont customFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            if (customFont.IsOk()) {
+                nameField->SetFont(customFont);
+            }
+            else {
+                nameField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+            }
+        }
+        else {
+            nameField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+        }
+
+        nameSizer->Add(nameField, 1, wxEXPAND | wxRIGHT, 5);
+
+        wxButton* nameColorButton = new wxButton(this, wxID_ANY, "Color");
+        nameColorButton->SetBackgroundColour(buttonColor);
+        nameColorButton->SetForegroundColour(textColor);
+        nameSizer->Add(nameColorButton, 0, wxALIGN_CENTER_VERTICAL);
+
+        itemSizer->Add(nameSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+        nameColorButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+            wxColourData data;
+            wxColourDialog dialog(this, &data);
+            if (dialog.ShowModal() == wxID_OK) {
+                wxColour color = dialog.GetColourData().GetColour();
+                if (color.IsOk()) {
+                    long start, end;
+                    nameField->GetSelection(&start, &end);
+                    if (start != end) {
+                        wxRichTextAttr attr;
+                        attr.SetTextColour(color);
+                        nameField->SetStyle(start, end, attr);
+                    }
+                    else {
+                        wxRichTextAttr attr;
+                        attr.SetTextColour(color);
+                        nameField->SetDefaultStyle(attr);
+                    }
+                }
+            }
+        });
+
+        MyRichTextCtrlTabFour* descriptionField = nullptr;
+        wxButton* descColorButton = nullptr;
+
+        if (!item.description.empty()) {
+            wxBoxSizer* descSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            wxStaticText* descLabel = new wxStaticText(this, wxID_ANY, "Description:");
+            descLabel->SetForegroundColour(textColor);
+
+            wxFont descLabelFont;
+            if (fontLoaded) {
+                descLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+                if (!descLabelFont.IsOk()) {
+                    wxLogWarning("Failed to apply '%s' at: Description.", ROBOTO_BOLD.c_str());
+                    descLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+                }
+            }
+            else {
+                descLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            }
+            descLabel->SetFont(descLabelFont);
+
+            descSizer->Add(descLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+            descriptionField = new MyRichTextCtrlTabFour(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
+            descriptionField->SetBackgroundColour(textCtrlBg);
+            descriptionField->SetForegroundColour(textCtrlFg);
+
+            if (fontLoaded) {
+                wxFont customFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                if (customFont.IsOk()) {
+                    descriptionField->SetFont(customFont);
+                }
+                else {
+                    descriptionField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+                }
+            }
+            else {
+                descriptionField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+            }
+
+            wxRichTextAttr defaultStyle;
+            defaultStyle.SetTextColour(textCtrlFg);
+            descriptionField->SetDefaultStyle(defaultStyle);
+
+            descSizer->Add(descriptionField, 1, wxEXPAND | wxRIGHT, 5);
+
+            descColorButton = new wxButton(this, wxID_ANY, "Color");
+            descColorButton->SetBackgroundColour(buttonColor);
+            descColorButton->SetForegroundColour(textColor);
+            descSizer->Add(descColorButton, 0, wxALIGN_CENTER_VERTICAL);
+
+            itemSizer->Add(descSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+            descColorButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+                wxColourData data;
+                wxColourDialog dialog(this, &data);
+                if (dialog.ShowModal() == wxID_OK) {
+                    wxColour color = dialog.GetColourData().GetColour();
+                    if (color.IsOk()) {
+                        long start, end;
+                        descriptionField->GetSelection(&start, &end);
+                        if (start != end) {
+                            wxRichTextAttr attr;
+                            attr.SetTextColour(color);
+                            descriptionField->SetStyle(start, end, attr);
+                        }
+                        else {
+                            wxRichTextAttr attr;
+                            attr.SetTextColour(color);
+                            descriptionField->SetDefaultStyle(attr);
+                        }
+                    }
+                }
+            });
+        }
 
         wxStaticLine* separator = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
         separator->SetForegroundColour(textColor);
         separator->SetBackgroundColour(textColor);
         itemSizer->Add(separator, 0, wxEXPAND | wxTOP, 5);
 
-
         entriesSizer->Add(itemSizer, 0, wxEXPAND | wxALL, 10);
-
 
         TabFourEntryControls controls;
         controls.nameField = nameField;
+        controls.nameColorButton = nameColorButton;
         controls.descriptionField = descriptionField;
-        entries.push_back(controls);
+        controls.descriptionColorButton = descColorButton;
+        entries[i] = controls;
     }
 
     mainSizer->Add(entriesSizer, 1, wxEXPAND | wxALL, 10);
@@ -156,7 +442,6 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     wxButton* saveButton = new wxButton(this, wxID_ANY, "Save");
     saveButton->SetBackgroundColour(buttonColor);
     saveButton->SetForegroundColour(textColor);
-    saveButton->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
 
     mainSizer->Add(saveButton, 0, wxALIGN_CENTER | wxALL, 10);
 
@@ -166,36 +451,38 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     SetScrollRate(20, 20);
 
     Layout();
-
     FitInside();
 }
 
-
 void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
-    wxString output;
-    for (size_t it = 0; it < items.size(); ++it){
+    std::stringstream output;
+
+    for (size_t it = 0; it < items.size(); it++) {
         const auto& item = items[it];
         const auto& controls = entries[it];
 
-        wxString nameText = controls.nameField->GetValue();
-        if (nameText.IsEmpty()) {
-            nameText = wxString::FromUTF8(item.name.c_str());
+        std::string nameText;
+        if (controls.nameField && !controls.nameField->GetValue().IsEmpty()) {
+            nameText = GetFormattedText(controls.nameField, textCtrlFg);
+        } else {
+            nameText = EscapeXML(item.name);
         }
 
-        output += wxString::Format("%d~%s", item.id, nameText);
+        std::string descText;
+        if (controls.descriptionField && !controls.descriptionField->GetValue().IsEmpty()) {
+            descText = GetFormattedText(controls.descriptionField, textCtrlFg);
+        } else if (!item.description.empty()) {
+            descText = EscapeXML(item.description);
+        }
 
         if (item.description.empty()) {
-
-            output += "\n";
+            output << item.id << "~" << nameText << "\n";
         } else {
-            wxString descText = controls.descriptionField->GetValue();
-            if (descText.IsEmpty()) {
-                descText = wxString::FromUTF8(item.description.c_str());
-            }
-            output += "~" + descText + "\n";
+            output << item.id << "~" << nameText << "~" << descText << "\n";
         }
     }
 
+    wxString outputStr = wxString::FromUTF8(output.str().c_str());
 
     wxFileDialog saveFileDialog(
         this,
@@ -212,15 +499,14 @@ void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
 
     wxString filePath = saveFileDialog.GetPath();
 
-
     wxFileOutputStream outputStream(filePath);
-    if (!outputStream.IsOk()){
-        wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);
+    if (!outputStream.IsOk()) {
+        wxMessageBox("Failed to save at:\n" + filePath, "Erro", wxOK | wxICON_ERROR);
         return;
     }
 
     wxTextOutputStream textStream(outputStream, wxEOL_NATIVE, wxConvUTF8);
-    textStream.WriteString(output);
+    textStream.WriteString(outputStr);
 
-    wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
+    wxMessageBox("File saved at:\n" + filePath, "Sucesso", wxOK | wxICON_INFORMATION);
 }

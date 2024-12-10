@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Encontrar wxWidgets
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(wxWidgets REQUIRED COMPONENTS core base richtext)
 if(NOT wxWidgets_FOUND)
     message(FATAL_ERROR "wxWidgets não encontrado!")
 endif()

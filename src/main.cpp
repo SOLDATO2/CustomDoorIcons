@@ -20,7 +20,7 @@ bool MyApp::OnInit() {
     // create window with dark background
     wxFrame* frame = new wxFrame(nullptr, wxID_ANY, "Custom Door Icons", wxDefaultPosition, wxDefaultSize,
         wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
-    frame->SetBackgroundColour(wxColour(30, 30, 30)); // Fundo escuro
+    frame->SetBackgroundColour(wxColour(30, 30, 30));
 
     SetTopWindow(frame);
 

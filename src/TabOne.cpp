@@ -10,12 +10,10 @@
 #include <iostream>
 
 
-// Definição de constantes para nomes das fontes
-const std::string ROBOTO_BOLD = "Roboto-Bold"; // Nome lógico definido no CustomFontLoader
+const std::string ROBOTO_BOLD = "Roboto Bold";
 
-// Construtor da classe TabOne
+
 TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
-    // Define cores para o tema escuro
     wxColour backgroundColor(30, 30, 30);
     wxColour textColor(*wxWHITE);
     wxColour buttonColor(70, 70, 70);
@@ -26,7 +24,6 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Inicializar labels
     labels = {
         "OPEN",
         "CLOSED",
@@ -40,7 +37,6 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         "CLOSING"
     };
 
-    // Cores padrão para cada entrada
     defaultColors = {
         wxColour(0, 255, 0),       // green
         wxColour(7, 162, 255),     // #07A2FF
@@ -54,31 +50,26 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         wxColour(255, 165, 0)      // orange
     };
 
-    // Sizer para organizar as entradas
     wxBoxSizer* entriesSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Carregar as fontes personalizadas
     bool fontsLoaded = LoadCustomFonts();
 
     if (!fontsLoaded) {
-        wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
+        
     }
 
-    // Criação dos controles de entrada para cada label
     for (size_t i = 0; i < labels.size(); ++i) {
         wxBoxSizer* entrySizer = new wxBoxSizer(wxVERTICAL);
 
-        // Label acima dos campos
         wxStaticText* label = new wxStaticText(this, wxID_ANY, labels[i]);
         label->SetForegroundColour(textColor);
 
-        // Aplicar a fonte Roboto Bold somente se fontsLoaded for verdadeiro
         if (fontsLoaded) {
             wxFont customFont = GetCustomFont(ROBOTO_BOLD, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (customFont.IsOk()) {
                 label->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao label.");
+                //wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao label.");
                 label->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
             }
         } else {
@@ -87,22 +78,19 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         entrySizer->Add(label, 0, wxALIGN_LEFT | wxALL, 5);
 
-        // Sizer horizontal para os campos
         wxBoxSizer* fieldsSizer = new wxBoxSizer(wxHORIZONTAL);
 
-        // Campo de texto (removido wxTE_MULTILINE para evitar múltiplas linhas)
         wxTextCtrl* textField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize,
             wxTE_PROCESS_ENTER);
         textField->SetBackgroundColour(textCtrlBg);
         textField->SetForegroundColour(textCtrlFg);
 
-        // Aplicar a fonte Roboto Bold ao campo de texto
         if (fontsLoaded) {
             wxFont customFont = GetCustomFont(ROBOTO_BOLD, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (customFont.IsOk()) {
                 textField->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de texto.");
+                
                 textField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {
@@ -111,19 +99,17 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         fieldsSizer->Add(textField, 1, wxEXPAND | wxRIGHT, 5);
 
-        // Campo de tamanho
         wxTextCtrl* sizeField = new wxTextCtrl(this, wxID_ANY, "100", wxDefaultPosition, wxSize(60, -1),
             wxTE_PROCESS_ENTER);
         sizeField->SetBackgroundColour(textCtrlBg);
         sizeField->SetForegroundColour(textCtrlFg);
 
-        // Aplicar a fonte Roboto Bold ao campo de tamanho
         if (fontsLoaded) {
             wxFont customFont = GetCustomFont(ROBOTO_BOLD, 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (customFont.IsOk()) {
                 sizeField->SetFont(customFont);
             } else {
-                wxLogWarning("Falha ao aplicar a fonte Roboto Bold ao campo de tamanho.");
+                
                 sizeField->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         } else {
@@ -132,42 +118,34 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         fieldsSizer->Add(sizeField, 0, wxEXPAND | wxALL, 5);
 
-        // Selecionador de cor
         wxColourPickerCtrl* colorPicker = new wxColourPickerCtrl(this, wxID_ANY, defaultColors[i]);
         fieldsSizer->Add(colorPicker, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-        // Checkbox para ignorar tamanho
         wxCheckBox* ignoreSizeCheckBox = new wxCheckBox(this, wxID_ANY, "Ignore size");
         ignoreSizeCheckBox->SetForegroundColour(textColor);
         fieldsSizer->Add(ignoreSizeCheckBox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-        // Botão para selecionar a imagem
         wxButton* selectImageButton = new wxButton(this, wxID_ANY, "Select Image");
         selectImageButton->SetBackgroundColour(buttonColor);
         selectImageButton->SetForegroundColour(textColor);
         fieldsSizer->Add(selectImageButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-        // Botão para resetar a imagem (inicialmente escondido)
         wxButton* resetImageButton = new wxButton(this, wxID_ANY, "Reset");
         resetImageButton->SetBackgroundColour(buttonColor);
         resetImageButton->SetForegroundColour(textColor);
         resetImageButton->Hide();
         fieldsSizer->Add(resetImageButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-        // Armazenar os controles
         TabOneEntryControls controls = { textField, sizeField, colorPicker, ignoreSizeCheckBox, selectImageButton, resetImageButton, "" };
         entries.push_back(controls);
 
-        // Adicionar os campos ao sizer horizontal
         entrySizer->Add(fieldsSizer, 0, wxEXPAND | wxALL, 5);
 
-        // Adicionar a entrada ao sizer principal
         entriesSizer->Add(entrySizer, 0, wxEXPAND | wxALL, 2);
     }
 
     mainSizer->Add(entriesSizer, 1, wxEXPAND | wxALL, 10);
 
-    // Botão "Salvar"
     wxButton* saveButton = new wxButton(this, wxID_ANY, "Save");
     saveButton->SetBackgroundColour(buttonColor);
     saveButton->SetForegroundColour(textColor);
@@ -175,7 +153,6 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
     SetSizer(mainSizer);
 
-    // Bind para os botões de selecionar e resetar imagem usando lambdas para capturar o índice
     for (size_t i = 0; i < entries.size(); ++i) {
         entries[i].selectImageButton->Bind(wxEVT_BUTTON, [this, i](wxCommandEvent& event) {
             this->OnSelectImageButtonClicked(i);
@@ -186,10 +163,8 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         });
     }
 
-    // Bind dos eventos do botão "Salvar"
     saveButton->Bind(wxEVT_BUTTON, &TabOne::OnSaveButtonClicked, this);
 
-    // Habilitar scroll
     SetScrollRate(10, 10);
 }
 
