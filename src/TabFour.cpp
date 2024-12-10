@@ -26,7 +26,6 @@ std::string TabFour::ColourToHex(const wxColour& color) {
     return std::string(hex.mb_str());
 }
 
-
 std::string TabFour::EscapeXML(const std::string& text) {
     std::string escaped;
     for (char c : text) {
@@ -42,7 +41,7 @@ std::string TabFour::EscapeXML(const std::string& text) {
     return escaped;
 }
 
-std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl) {
+std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl, const wxColour& defaultColor) {
     std::stringstream formattedText;
     long length = ctrl->GetLastPosition();
 
@@ -63,9 +62,7 @@ std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl) {
             ctrl->GetStyle(pos, runAttr);
             wxColour runColor = runAttr.GetTextColour();
 
-            if (runColor.Red() != currentColor.Red() ||
-                runColor.Green() != currentColor.Green() ||
-                runColor.Blue() != currentColor.Blue()) {
+            if (runColor != currentColor) {
                 break;
             }
             pos++;
@@ -77,10 +74,9 @@ std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl) {
 
         std::string escapedText = EscapeXML(runText);
 
-        // if color isnt default (black)
-        bool isNotBlack = !(currentColor.Red() == 0 && currentColor.Green() == 0 && currentColor.Blue() == 0);
+        bool colorsDiffer = (currentColor != defaultColor);
 
-        if (isNotBlack) {
+        if (colorsDiffer) {
             formattedText << "<color=" << ColourToHex(currentColor) << ">" << escapedText << "</color>";
         }
         else {
@@ -96,7 +92,13 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     textColor = *wxWHITE;
     buttonColor = wxColour(70, 70, 70);
     textCtrlBg = wxColour(50, 50, 50);
-    textCtrlFg = *wxWHITE;
+    #ifdef _WIN32
+    textCtrlFg = *wxBLACK;
+    #elif __linux__
+    textCtrlFg = wxColour(247, 247, 247); // #F7F7F7
+    #else
+    textCtrlFg = *wxWHITE; // another os
+    #endif
 
     SetBackgroundColour(backgroundColor);
 
@@ -105,7 +107,6 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     bool fontLoaded = LoadCustomFonts();
 
     if (!fontLoaded) {
-        //
     }
 
     items = {
@@ -222,7 +223,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {"FR-MG-0", {__frmg_png, __frmg_png_len}},
         {"A7", {__a7_png, __a7_png_len}},
         {"Lantern", {__lantern_png, __lantern_png_len}},
-        //{"SCP-1344", {__scp1344_png, __scp1344_png_len}}, no icon yet
+        //{"SCP-1344", {__scp1344_png, __scp1344_png_len}}, // no icon yet
         {"Snowball", {__snowball_png, __snowball_png_len}},
         {"Coal", {__coal_png, __coal_png_len}},
         {"Coal?", {__coal_png, __coal_png_len}},
@@ -285,7 +286,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         if (fontLoaded) {
             nameLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (!nameLabelFont.IsOk()) {
-                wxLogWarning("Falha ao aplicar '%s' a: Nome.", ROBOTO_BOLD.c_str());
+                wxLogWarning("Failed to apply '%s' at: Nome.", ROBOTO_BOLD.c_str());
                 nameLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             }
         }
@@ -357,7 +358,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (fontLoaded) {
                 descLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 if (!descLabelFont.IsOk()) {
-                    wxLogWarning("Failed to apply desc '%s' to: Description.", ROBOTO_BOLD.c_str());
+                    wxLogWarning("Failed to apply '%s' at: Description.", ROBOTO_BOLD.c_str());
                     descLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 }
             }
@@ -367,7 +368,6 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             descLabel->SetFont(descLabelFont);
 
             descSizer->Add(descLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-
 
             descriptionField = new MyRichTextCtrlTabFour(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
             descriptionField->SetBackgroundColour(textCtrlBg);
@@ -385,6 +385,10 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             else {
                 descriptionField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
+
+            wxRichTextAttr defaultStyle;
+            defaultStyle.SetTextColour(textCtrlFg);
+            descriptionField->SetDefaultStyle(defaultStyle);
 
             descSizer->Add(descriptionField, 1, wxEXPAND | wxRIGHT, 5);
 
@@ -459,14 +463,14 @@ void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
 
         std::string nameText;
         if (controls.nameField && !controls.nameField->GetValue().IsEmpty()) {
-            nameText = GetFormattedText(controls.nameField);
+            nameText = GetFormattedText(controls.nameField, textCtrlFg);
         } else {
             nameText = EscapeXML(item.name);
         }
 
         std::string descText;
         if (controls.descriptionField && !controls.descriptionField->GetValue().IsEmpty()) {
-            descText = GetFormattedText(controls.descriptionField);
+            descText = GetFormattedText(controls.descriptionField, textCtrlFg);
         } else if (!item.description.empty()) {
             descText = EscapeXML(item.description);
         }

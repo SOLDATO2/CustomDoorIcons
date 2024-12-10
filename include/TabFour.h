@@ -61,7 +61,7 @@ public:
 private:
     void OnSaveButtonClicked(wxCommandEvent& event);
     std::string EscapeXML(const std::string& text);
-    std::string GetFormattedText(wxRichTextCtrl* ctrl);
+    std::string GetFormattedText(wxRichTextCtrl* ctrl, const wxColour& defaultColor);
     std::string ColourToHex(const wxColour& color);
 
     std::vector<TabFourEntryControls> entries;

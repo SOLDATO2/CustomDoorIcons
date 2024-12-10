@@ -92,7 +92,12 @@ TabTwo::TabTwo(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     textColor = *wxWHITE;
     buttonColor = wxColour(70, 70, 70);
     textCtrlBg = wxColour(50, 50, 50);
+    #ifdef _WIN32
     textCtrlFg = *wxBLACK;
+    #elif __linux__
+    textCtrlFg = wxColour(247, 247, 247);
+    #endif
+    
 
     SetBackgroundColour(backgroundColor);
 
