@@ -11,23 +11,92 @@
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
 #include <wx/mstream.h>
+#include <wx/colourdata.h>
+#include <wx/colordlg.h>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-
-//#ifdef _WIN32
-//#include <windows.h>
-//#endif
-
+#include <sstream>
+#include <iomanip>
 
 const std::string ROBOTO_BOLD = "Roboto Bold";
 
+std::string TabFour::ColourToHex(const wxColour& color) {
+    wxString hex = wxString::Format("#%02X%02X%02X", color.Red(), color.Green(), color.Blue());
+    return std::string(hex.mb_str());
+}
+
+
+std::string TabFour::EscapeXML(const std::string& text) {
+    std::string escaped;
+    for (char c : text) {
+        switch(c) {
+            case '&': escaped += "&amp;"; break;
+            case '<': escaped += "&lt;"; break;
+            case '>': escaped += "&gt;"; break;
+            case '"': escaped += "&quot;"; break;
+            case '\'': escaped += "&apos;"; break;
+            default: escaped += c;
+        }
+    }
+    return escaped;
+}
+
+std::string TabFour::GetFormattedText(wxRichTextCtrl* ctrl) {
+    std::stringstream formattedText;
+    long length = ctrl->GetLastPosition();
+
+    if (length == 0) {
+        return formattedText.str();
+    }
+
+    long pos = 0;
+
+    while (pos < length) {
+        wxTextAttr attr;
+        ctrl->GetStyle(pos, attr);
+        wxColour currentColor = attr.GetTextColour();
+
+        long runStart = pos;
+        while (pos < length) {
+            wxTextAttr runAttr;
+            ctrl->GetStyle(pos, runAttr);
+            wxColour runColor = runAttr.GetTextColour();
+
+            if (runColor.Red() != currentColor.Red() ||
+                runColor.Green() != currentColor.Green() ||
+                runColor.Blue() != currentColor.Blue()) {
+                break;
+            }
+            pos++;
+        }
+        long runEnd = pos;
+
+        wxString runTextWx = ctrl->GetRange(runStart, runEnd);
+        std::string runText = std::string(runTextWx.mb_str());
+
+        std::string escapedText = EscapeXML(runText);
+
+        // if color isnt default (black)
+        bool isNotBlack = !(currentColor.Red() == 0 && currentColor.Green() == 0 && currentColor.Blue() == 0);
+
+        if (isNotBlack) {
+            formattedText << "<color=" << ColourToHex(currentColor) << ">" << escapedText << "</color>";
+        }
+        else {
+            formattedText << escapedText;
+        }
+    }
+
+    return formattedText.str();
+}
+
 TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
-    wxColour backgroundColor(30, 30, 30);
-    wxColour textColor(*wxWHITE);
-    wxColour buttonColor(70, 70, 70);
-    wxColour textCtrlBg(50, 50, 50);
-    wxColour textCtrlFg(*wxWHITE);
+    backgroundColor = wxColour(30, 30, 30);
+    textColor = *wxWHITE;
+    buttonColor = wxColour(70, 70, 70);
+    textCtrlBg = wxColour(50, 50, 50);
+    textCtrlFg = *wxWHITE;
 
     SetBackgroundColour(backgroundColor);
 
@@ -36,69 +105,69 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
     bool fontLoaded = LoadCustomFonts();
 
     if (!fontLoaded) {
-        //wxLogWarning("Falha ao carregar fontes personalizadas. Usando fontes padrão.");
+        //
     }
 
     items = {
-        {0, "Janitor Keycard", ""}, //ok
-        {1, "Scientist Keycard", ""}, //ok
-        {2, "Research Supervisor Keycard", ""}, //ok
-        {3, "Zone Manager Keycard", ""}, //ok
-        {4, "Guard Keycard", ""}, //ok
-        {5, "MTF Private Keycard", ""}, //ok
-        {6, "Containment Engineer Keycard", ""}, //ok
-        {7, "MTF Operative Keycard", ""}, //ok
-        {8, "MTF Captain Keycard", ""}, //ok
-        {9, "Facility Manager Keycard", ""}, //ok
-        {10, "Chaos Insurgency Access Device", ""} , //ok
-        {11, "O5-level Keycard", ""}, //ok
-        {12, "Radio", "Allows communication over long distances between devices. Range can be adjusted."}, //ok
-        {13, "COM-15", ""}, //ok
-        {14, "First Aid Kit", "Heals your injuries."}, //ok
-        {15, "Flashlight", "Let there be light!"}, //ok
-        {16, "Micro H.I.D.", "Heavy electrical device designed for the termination of anomalies."}, //ok
-        {17, "SCP-500", "The Panacea. Instantly restores all health and cures most afflictions."}, //ok
-        {18, "SCP-207", "Harmfully increases motor skills."}, //ok
-        {20, "MTF-E11-SR", ""}, //ok
-        {21, "Crossvec", ""}, //ok
-        {23, "FSP-9", ""}, //ok
-        {24, "Logicer", ""}, //ok
-        {25, "High-Explosive Grenade", "A high explosive dealing significant damage. Detonates after a brief delay once thrown."}, //ok
-        {26, "Flashbang Grenade", "Blinds and disorients your enemies. Detonates after a brief delay once thrown."}, //ok
-        {30, "COM-18", ""}, //ok
-        {31, "SCP-018", "Superball with the ability to bounce with extreme efficiency. Deadly ricochet at high speeds."}, //ok
-        {32, "SCP-268", "When worn, temporarily makes you invisible unless it is interrupted by any user interaction."}, //ok
-        {33, "Adrenaline", "Provides a temporary health boost and a short burst of stamina."}, //ok
-        {34, "Painkillers", "Slowly restores health over time."},//ok
-        {35, "Coin", "You're not sure why you'd want to carry this around..."}, //ok
-        {36, "Light Armor", ""}, //ok
-        {37, "Combat Armor", ""},//ok
-        {38, "Heavy Armor", ""},//ok
-        {39, ".44 Revolver", ""}, //ok
-        {40, "AK", ""}, //ok
-        {41, "Shotgun", ""}, //ok
-        {42, "Bag of Candies", "A bag containing the following candies:"}, //ok
-        {43, "SCP-2176", "Your very own Ghostlight! Caution: Fragile. Disrupts electronics when broken."}, //ok
-        {44, "SCP-244-A", "An ancient vase, freezing to the touch. Creates a large cloud of icy fog when placed."}, //ok
-        {45, "SCP-244-B", "An ancient vase, freezing to the touch. Creates a large cloud of icy fog when placed."}, //ok
-        {46, "SCP-1853", "Increases dexterity and weapon handling when your life is in danger."}, //ok
-        {47, "3-X Particle Disruptor", "A strange weapon that fires powerful, disintegrating energy beams."}, //ok
-        {48, "COM-45", ""}, //ok
-        {49, "SCP-1576", "Allows temporary communication with the dead. Can be used again after some time passes."}, //ok
-        {50, "Jailbird", "What?!"}, //ok
-        {51, "Anti-Cola", "The result of an experiment with SCP-914. Good for your health, bad for your motor skills. Will save your life in a pinch."}, //ok
-        {52, "FR-MG-0", ""}, //ok
-        {53, "A7", ""}, //ok
-        {54, "Lantern", "A classic oil lantern, inscribed with the name 'Daniel'."}, //ok
+        {0, "Janitor Keycard", ""},
+        {1, "Scientist Keycard", ""},
+        {2, "Research Supervisor Keycard", ""},
+        {3, "Zone Manager Keycard", ""},
+        {4, "Guard Keycard", ""},
+        {5, "MTF Private Keycard", ""},
+        {6, "Containment Engineer Keycard", ""},
+        {7, "MTF Operative Keycard", ""},
+        {8, "MTF Captain Keycard", ""},
+        {9, "Facility Manager Keycard", ""},
+        {10, "Chaos Insurgency Access Device", ""},
+        {11, "O5-level Keycard", ""},
+        {12, "Radio", "Allows communication over long distances between devices. Range can be adjusted."},
+        {13, "COM-15", ""},
+        {14, "First Aid Kit", "Heals your injuries."},
+        {15, "Flashlight", "Let there be light!"},
+        {16, "Micro H.I.D.", "Heavy electrical device designed for the termination of anomalies."},
+        {17, "SCP-500", "The Panacea. Instantly restores all health and cures most afflictions."},
+        {18, "SCP-207", "Harmfully increases motor skills."},
+        {20, "MTF-E11-SR", ""},
+        {21, "Crossvec", ""},
+        {23, "FSP-9", ""},
+        {24, "Logicer", ""},
+        {25, "High-Explosive Grenade", "A high explosive dealing significant damage. Detonates after a brief delay once thrown."},
+        {26, "Flashbang Grenade", "Blinds and disorients your enemies. Detonates after a brief delay once thrown."},
+        {30, "COM-18", ""},
+        {31, "SCP-018", "Superball with the ability to bounce with extreme efficiency. Deadly ricochet at high speeds."},
+        {32, "SCP-268", "When worn, temporarily makes you invisible unless it is interrupted by any user interaction."},
+        {33, "Adrenaline", "Provides a temporary health boost and a short burst of stamina."},
+        {34, "Painkillers", "Slowly restores health over time."},
+        {35, "Coin", "You're not sure why you'd want to carry this around..."},
+        {36, "Light Armor", ""},
+        {37, "Combat Armor", ""},
+        {38, "Heavy Armor", ""},
+        {39, ".44 Revolver", ""},
+        {40, "AK", ""},
+        {41, "Shotgun", ""},
+        {42, "Bag of Candies", "A bag containing the following candies:"},
+        {43, "SCP-2176", "Your very own Ghostlight! Caution: Fragile. Disrupts electronics when broken."},
+        {44, "SCP-244-A", "An ancient vase, freezing to the touch. Creates a large cloud of icy fog when placed."},
+        {45, "SCP-244-B", "An ancient vase, freezing to the touch. Creates a large cloud of icy fog when placed."},
+        {46, "SCP-1853", "Increases dexterity and weapon handling when your life is in danger."},
+        {47, "3-X Particle Disruptor", "A strange weapon that fires powerful, disintegrating energy beams."},
+        {48, "COM-45", ""},
+        {49, "SCP-1576", "Allows temporary communication with the dead. Can be used again after some time passes."},
+        {50, "Jailbird", "What?!"},
+        {51, "Anti-Cola", "The result of an experiment with SCP-914. Good for your health, bad for your motor skills. Will save your life in a pinch."},
+        {52, "FR-MG-0", ""},
+        {53, "A7", ""},
+        {54, "Lantern", "A classic oil lantern, inscribed with the name 'Daniel'."},
         {55, "SCP-1344", "A set of modified goggles that lets you perceive the positions of other players through walls. Once worn, they must never be removed!"},
-        {56, "Snowball", ""}, //ok
-        {57, "Coal", ""}, //ok
-        {58, "Coal?", ""}, //ok
-        {59, "Tape Player?", "Contains an unlabeled tape. Please don’t play it. Please."}, //ok
-        {60, "Tape Player", "Contains an unlabeled tape. Please don’t play it. Please."} //ok
+        {56, "Snowball", ""},
+        {57, "Coal", ""},
+        {58, "Coal?", ""},
+        {59, "Tape Player?", "Contains an unlabeled tape. Please don’t play it. Please."},
+        {60, "Tape Player", "Contains an unlabeled tape. Please don’t play it. Please."}
     };
 
-    entries.resize(items.size(), TabFourEntryControls{nullptr, nullptr});
+    entries.resize(items.size(), TabFourEntryControls{nullptr, nullptr, nullptr, nullptr});
 
     wxBoxSizer* entriesSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -153,7 +222,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         {"FR-MG-0", {__frmg_png, __frmg_png_len}},
         {"A7", {__a7_png, __a7_png_len}},
         {"Lantern", {__lantern_png, __lantern_png_len}},
-        //{"SCP-1344", {__scp1344_png, __scp1344_png_len}},
+        //{"SCP-1344", {__scp1344_png, __scp1344_png_len}}, no icon yet
         {"Snowball", {__snowball_png, __snowball_png_len}},
         {"Coal", {__coal_png, __coal_png_len}},
         {"Coal?", {__coal_png, __coal_png_len}},
@@ -175,7 +244,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         if (fontLoaded) {
             customLabelFont = GetCustomFont(ROBOTO_BOLD, 20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (!customLabelFont.IsOk()) {
-                wxLogWarning("Failed to apply 'OliversBarney-Regular' to: %s", item.name);
+                wxLogWarning("Failed to apply '%s' at: %s", ROBOTO_BOLD.c_str(), item.name.c_str());
                 customLabelFont = wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             }
         }
@@ -196,7 +265,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
                 iconBitmap = wxBitmap(resizedImage);
             }
             else {
-                //wxLogWarning("Failed to load image to: %s", item.name);
+                wxLogWarning("Failed to load icon to: %s", item.name.c_str());
             }
         }
 
@@ -204,7 +273,10 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             wxStaticBitmap* icon = new wxStaticBitmap(this, wxID_ANY, iconBitmap);
             headerSizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL);
         }
+
         itemSizer->Add(headerSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+        wxBoxSizer* nameSizer = new wxBoxSizer(wxHORIZONTAL);
 
         wxStaticText* nameLabel = new wxStaticText(this, wxID_ANY, "Name:");
         nameLabel->SetForegroundColour(textColor);
@@ -213,7 +285,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         if (fontLoaded) {
             nameLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             if (!nameLabelFont.IsOk()) {
-                //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
+                wxLogWarning("Falha ao aplicar '%s' a: Nome.", ROBOTO_BOLD.c_str());
                 nameLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             }
         }
@@ -222,30 +294,62 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
         }
         nameLabel->SetFont(nameLabelFont);
 
-        itemSizer->Add(nameLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+        nameSizer->Add(nameLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
 
-        wxTextCtrl* nameField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+        MyRichTextCtrlTabFour* nameField = new MyRichTextCtrlTabFour(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
         nameField->SetBackgroundColour(textCtrlBg);
         nameField->SetForegroundColour(textCtrlFg);
 
-        wxFont nameFieldFont;
         if (fontLoaded) {
-            nameFieldFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-            if (!nameFieldFont.IsOk()) {
-                //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
-                nameFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            wxFont customFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            if (customFont.IsOk()) {
+                nameField->SetFont(customFont);
+            }
+            else {
+                nameField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
         }
         else {
-            nameFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            nameField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
         }
-        nameField->SetFont(nameFieldFont);
 
-        itemSizer->Add(nameField, 0, wxEXPAND | wxBOTTOM, 10);
+        nameSizer->Add(nameField, 1, wxEXPAND | wxRIGHT, 5);
 
-        wxTextCtrl* descriptionField = nullptr;
+        wxButton* nameColorButton = new wxButton(this, wxID_ANY, "Color");
+        nameColorButton->SetBackgroundColour(buttonColor);
+        nameColorButton->SetForegroundColour(textColor);
+        nameSizer->Add(nameColorButton, 0, wxALIGN_CENTER_VERTICAL);
+
+        itemSizer->Add(nameSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+        nameColorButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+            wxColourData data;
+            wxColourDialog dialog(this, &data);
+            if (dialog.ShowModal() == wxID_OK) {
+                wxColour color = dialog.GetColourData().GetColour();
+                if (color.IsOk()) {
+                    long start, end;
+                    nameField->GetSelection(&start, &end);
+                    if (start != end) {
+                        wxRichTextAttr attr;
+                        attr.SetTextColour(color);
+                        nameField->SetStyle(start, end, attr);
+                    }
+                    else {
+                        wxRichTextAttr attr;
+                        attr.SetTextColour(color);
+                        nameField->SetDefaultStyle(attr);
+                    }
+                }
+            }
+        });
+
+        MyRichTextCtrlTabFour* descriptionField = nullptr;
+        wxButton* descColorButton = nullptr;
 
         if (!item.description.empty()) {
+            wxBoxSizer* descSizer = new wxBoxSizer(wxHORIZONTAL);
+
             wxStaticText* descLabel = new wxStaticText(this, wxID_ANY, "Description:");
             descLabel->SetForegroundColour(textColor);
 
@@ -253,7 +357,7 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             if (fontLoaded) {
                 descLabelFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 if (!descLabelFont.IsOk()) {
-                    //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Name.");
+                    wxLogWarning("Failed to apply desc '%s' to: Description.", ROBOTO_BOLD.c_str());
                     descLabelFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
                 }
             }
@@ -262,26 +366,56 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
             }
             descLabel->SetFont(descLabelFont);
 
-            itemSizer->Add(descLabel, 0, wxALIGN_LEFT | wxBOTTOM, 5);
+            descSizer->Add(descLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
 
-            descriptionField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+
+            descriptionField = new MyRichTextCtrlTabFour(this, wxID_ANY, "", wxDefaultPosition, wxSize(-1, 50), wxRE_MULTILINE | wxBORDER_SUNKEN);
             descriptionField->SetBackgroundColour(textCtrlBg);
             descriptionField->SetForegroundColour(textCtrlFg);
 
-            wxFont descFieldFont;
             if (fontLoaded) {
-                descFieldFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-                if (!descFieldFont.IsOk()) {
-                    //wxLogWarning("Failed to apply 'OliversBarney-Regular' to: Description.");
-                    descFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                wxFont customFont = GetCustomFont(ROBOTO_BOLD, 16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                if (customFont.IsOk()) {
+                    descriptionField->SetFont(customFont);
+                }
+                else {
+                    descriptionField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
                 }
             }
             else {
-                descFieldFont = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                descriptionField->SetFont(wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
             }
-            descriptionField->SetFont(descFieldFont);
 
-            itemSizer->Add(descriptionField, 0, wxEXPAND | wxBOTTOM, 10);
+            descSizer->Add(descriptionField, 1, wxEXPAND | wxRIGHT, 5);
+
+            descColorButton = new wxButton(this, wxID_ANY, "Color");
+            descColorButton->SetBackgroundColour(buttonColor);
+            descColorButton->SetForegroundColour(textColor);
+            descSizer->Add(descColorButton, 0, wxALIGN_CENTER_VERTICAL);
+
+            itemSizer->Add(descSizer, 0, wxEXPAND | wxBOTTOM, 10);
+
+            descColorButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+                wxColourData data;
+                wxColourDialog dialog(this, &data);
+                if (dialog.ShowModal() == wxID_OK) {
+                    wxColour color = dialog.GetColourData().GetColour();
+                    if (color.IsOk()) {
+                        long start, end;
+                        descriptionField->GetSelection(&start, &end);
+                        if (start != end) {
+                            wxRichTextAttr attr;
+                            attr.SetTextColour(color);
+                            descriptionField->SetStyle(start, end, attr);
+                        }
+                        else {
+                            wxRichTextAttr attr;
+                            attr.SetTextColour(color);
+                            descriptionField->SetDefaultStyle(attr);
+                        }
+                    }
+                }
+            });
         }
 
         wxStaticLine* separator = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
@@ -293,7 +427,9 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         TabFourEntryControls controls;
         controls.nameField = nameField;
+        controls.nameColorButton = nameColorButton;
         controls.descriptionField = descriptionField;
+        controls.descriptionColorButton = descColorButton;
         entries[i] = controls;
     }
 
@@ -315,28 +451,34 @@ TabFour::TabFour(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 }
 
 void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
-    wxString output;
-    for (size_t it = 0; it < items.size(); ++it){
+    std::stringstream output;
+
+    for (size_t it = 0; it < items.size(); it++) {
         const auto& item = items[it];
         const auto& controls = entries[it];
 
-        wxString nameText = controls.nameField->GetValue();
-        if (nameText.IsEmpty()) {
-            nameText = wxString::FromUTF8(item.name.c_str());
+        std::string nameText;
+        if (controls.nameField && !controls.nameField->GetValue().IsEmpty()) {
+            nameText = GetFormattedText(controls.nameField);
+        } else {
+            nameText = EscapeXML(item.name);
         }
 
-        output += wxString::Format("%d~%s", item.id, nameText);
+        std::string descText;
+        if (controls.descriptionField && !controls.descriptionField->GetValue().IsEmpty()) {
+            descText = GetFormattedText(controls.descriptionField);
+        } else if (!item.description.empty()) {
+            descText = EscapeXML(item.description);
+        }
 
         if (item.description.empty()) {
-            output += "\n";
+            output << item.id << "~" << nameText << "\n";
         } else {
-            wxString descText = controls.descriptionField->GetValue();
-            if (descText.IsEmpty()) {
-                descText = wxString::FromUTF8(item.description.c_str());
-            }
-            output += "~" + descText + "\n";
+            output << item.id << "~" << nameText << "~" << descText << "\n";
         }
     }
+
+    wxString outputStr = wxString::FromUTF8(output.str().c_str());
 
     wxFileDialog saveFileDialog(
         this,
@@ -354,13 +496,13 @@ void TabFour::OnSaveButtonClicked(wxCommandEvent& event) {
     wxString filePath = saveFileDialog.GetPath();
 
     wxFileOutputStream outputStream(filePath);
-    if (!outputStream.IsOk()){
-        wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);
+    if (!outputStream.IsOk()) {
+        wxMessageBox("Failed to save at:\n" + filePath, "Erro", wxOK | wxICON_ERROR);
         return;
     }
 
     wxTextOutputStream textStream(outputStream, wxEOL_NATIVE, wxConvUTF8);
-    textStream.WriteString(output);
+    textStream.WriteString(outputStr);
 
-    wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
+    wxMessageBox("File saved at:\n" + filePath, "Sucesso", wxOK | wxICON_INFORMATION);
 }
