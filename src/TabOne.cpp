@@ -212,14 +212,8 @@ void TabOne::OnResetImageButtonClicked(size_t index) {
 
 
 void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
-    // Vamos construir o texto de saída.
-    // Para cada entry, se houver imagem, imprime o texto da imagem;
-    // caso contrário, imprime o label padrão com a cor padrão.
-
     wxString output;
 
-    // Pressupondo que `labels` e `defaultColors` correspondem 1 a 1 com entries.
-    // Loop sobre todos os entries
     for (size_t i = 0; i < entries.size(); ++i) {
         if (!entries[i].imagePath.empty()) {
             // Há uma imagem selecionada para este label
@@ -228,15 +222,20 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
             // Adicionar o texto da imagem no output
             output << imageText << "\n";
         } else {
-            // Não há imagem, apenas imprimir o label com cor padrão
-            // A cor padrão está em defaultColors[i], o nome do label em labels[i]
+            // Não há imagem, verificar texto digitado pelo usuário
+            wxString userText = entries[i].textField->GetValue().Trim().Trim(false);
+            
+            // Se o usuário não digitou nada, usar o label padrão
+            if (userText.IsEmpty()) {
+                userText = wxString::FromUTF8(labels[i].c_str());
+            }
+
+            // Usar a cor padrão
             wxString hexColor = defaultColors[i].GetAsString(wxC2S_HTML_SYNTAX);
-            wxString labelName = wxString::FromUTF8(labels[i].c_str());
-            output << "<color=" << hexColor << ">" << labelName << "</color>\n";
+            output << "<color=" << hexColor << ">" << userText << "</color>\n";
         }
     }
 
-    // Agora salvamos em Doors.txt
     wxFileDialog saveFileDialog(
         this,
         _("Save Doors.txt file"),
