@@ -35,7 +35,7 @@ wxString imageToProcessedHTML(const std::string& imagePath, int width) {
                 htmlOutput += "<color=" + currentColor + ">";
             }
 
-            htmlOutput += L"\u2588";  // '█'
+            htmlOutput += L"\u2588";
         }
         if (!currentColor.IsEmpty()) {
             htmlOutput += "</color>";
