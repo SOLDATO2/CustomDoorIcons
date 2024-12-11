@@ -431,7 +431,7 @@ void TabTwo::OnSaveButtonClicked(wxCommandEvent& event) {
         this,
         _("Save Classes_Names.txt file"),
         "",
-        "Classes_Names.txt",
+        "Class_Names.txt",
         "Text files (*.txt)|*.txt",
         wxFD_SAVE | wxFD_OVERWRITE_PROMPT
     );
