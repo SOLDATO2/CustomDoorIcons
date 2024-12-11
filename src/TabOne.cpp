@@ -123,7 +123,9 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         wxCheckBox* ignoreSizeCheckBox = new wxCheckBox(this, wxID_ANY, "Ignore size");
         ignoreSizeCheckBox->SetForegroundColour(textColor);
+        ignoreSizeCheckBox->SetValue(true);
         fieldsSizer->Add(ignoreSizeCheckBox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+        
 
         wxButton* selectImageButton = new wxButton(this, wxID_ANY, "Select Image");
         selectImageButton->SetBackgroundColour(buttonColor);
@@ -188,6 +190,9 @@ void TabOne::OnSelectImageButtonClicked(size_t index) {
 
     entries[index].sizeField->Disable();
     entries[index].colorPicker->Disable();
+    if (entries[index].ignoreSizeCheckBox->GetValue()) {
+        entries[index].ignoreSizeCheckBox->SetValue(false);
+    }
     entries[index].ignoreSizeCheckBox->Disable();
 
     entries[index].resetImageButton->Show();
@@ -196,14 +201,14 @@ void TabOne::OnSelectImageButtonClicked(size_t index) {
 }
 
 void TabOne::OnResetImageButtonClicked(size_t index) {
-
     entries[index].imagePath = "";
 
     entries[index].textField->SetValue("");
-
     entries[index].sizeField->Enable();
     entries[index].colorPicker->Enable();
     entries[index].ignoreSizeCheckBox->Enable();
+
+    entries[index].ignoreSizeCheckBox->SetValue(true);
 
     entries[index].resetImageButton->Hide();
 
@@ -216,23 +221,30 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
 
     for (size_t i = 0; i < entries.size(); ++i) {
         if (!entries[i].imagePath.empty()) {
-            // Há uma imagem selecionada para este label
-            int width = 80; // conforme o código original
+            int width = 80;
             wxString imageText = imageToProcessedHTML(entries[i].imagePath, width);
-            // Adicionar o texto da imagem no output
             output << imageText << "\n";
         } else {
-            // Não há imagem, verificar texto digitado pelo usuário
             wxString userText = entries[i].textField->GetValue().Trim().Trim(false);
             
-            // Se o usuário não digitou nada, usar o label padrão
             if (userText.IsEmpty()) {
                 userText = wxString::FromUTF8(labels[i].c_str());
             }
 
-            // Usar a cor padrão
             wxString hexColor = defaultColors[i].GetAsString(wxC2S_HTML_SYNTAX);
-            output << "<color=" << hexColor << ">" << userText << "</color>\n";
+
+            bool ignoreSize = entries[i].ignoreSizeCheckBox->GetValue();
+
+            wxString sizeStr = entries[i].sizeField->GetValue().Trim().Trim(false);
+            if (sizeStr.IsEmpty()) {
+                sizeStr = "90";
+            }
+
+            if (!ignoreSize) {
+                output << "<color=" << hexColor << "><size=" << sizeStr << ">" << userText << "</size></color>\n";
+            } else {
+                output << "<color=" << hexColor << ">" << userText << "</color>\n";
+            }
         }
     }
 
@@ -252,18 +264,13 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
     wxString filePath = saveFileDialog.GetPath();
     wxFile file;
     if (!file.Create(filePath, true)) {
-        wxMessageBox("Não foi possível criar o arquivo Doors.txt.", "Erro", wxOK | wxICON_ERROR);
+        wxMessageBox("Couldn't create text file", "Erro", wxOK | wxICON_ERROR);
         return;
     }
 
-    // Escreve BOM UTF-8
-    unsigned char bom[3] = {0xEF, 0xBB, 0xBF};
-    file.Write(bom, 3);
-
-    // Converte para UTF-8
     auto utf8Data = output.utf8_str();
     file.Write(utf8Data.data(), utf8Data.length());
     file.Close();
 
-    wxMessageBox("Arquivo Doors.txt criado com sucesso!", "Sucesso", wxOK | wxICON_INFORMATION);
+    wxMessageBox("Text file saved!", "Sucesso", wxOK | wxICON_INFORMATION);
 }
