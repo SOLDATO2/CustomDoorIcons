@@ -123,7 +123,9 @@ TabOne::TabOne(wxNotebook* parent) : wxScrolledWindow(parent, wxID_ANY) {
 
         wxCheckBox* ignoreSizeCheckBox = new wxCheckBox(this, wxID_ANY, "Ignore size");
         ignoreSizeCheckBox->SetForegroundColour(textColor);
+        ignoreSizeCheckBox->SetValue(true);
         fieldsSizer->Add(ignoreSizeCheckBox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+        
 
         wxButton* selectImageButton = new wxButton(this, wxID_ANY, "Select Image");
         selectImageButton->SetBackgroundColour(buttonColor);
@@ -188,6 +190,9 @@ void TabOne::OnSelectImageButtonClicked(size_t index) {
 
     entries[index].sizeField->Disable();
     entries[index].colorPicker->Disable();
+    if (entries[index].ignoreSizeCheckBox->GetValue()) {
+        entries[index].ignoreSizeCheckBox->SetValue(false);
+    }
     entries[index].ignoreSizeCheckBox->Disable();
 
     entries[index].resetImageButton->Show();
@@ -196,14 +201,14 @@ void TabOne::OnSelectImageButtonClicked(size_t index) {
 }
 
 void TabOne::OnResetImageButtonClicked(size_t index) {
-
     entries[index].imagePath = "";
 
     entries[index].textField->SetValue("");
-
     entries[index].sizeField->Enable();
     entries[index].colorPicker->Enable();
     entries[index].ignoreSizeCheckBox->Enable();
+
+    entries[index].ignoreSizeCheckBox->SetValue(true);
 
     entries[index].resetImageButton->Hide();
 
@@ -215,54 +220,32 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
     wxString output;
 
     for (size_t i = 0; i < entries.size(); ++i) {
-        wxString entryContent;
-
         if (!entries[i].imagePath.empty()) {
-            std::string imagePath = entries[i].imagePath;
             int width = 80;
-
-            try {
-                width = std::stoi(entries[i].sizeField->GetValue().ToStdString());
-            }
-            catch (const std::exception&) {
-                wxMessageBox("Invalid width provided. Please enter a valid number.", "Error", wxOK | wxICON_ERROR);
-                return;
-            }
-
-            if (width < 10 || width > 300) {
-                wxMessageBox("Width must be between 10 and 300 for image processing.", "Error", wxOK | wxICON_ERROR);
-                return;
-            }
-
-            entryContent = imageToProcessedHTML(imagePath, width);
+            wxString imageText = imageToProcessedHTML(entries[i].imagePath, width);
+            output << imageText << "\n";
         } else {
-            wxString text = entries[i].textField->GetValue();
-            wxString sizeStr = entries[i].sizeField->GetValue();
-            wxColour color = entries[i].colorPicker->GetColour();
+            wxString userText = entries[i].textField->GetValue().Trim().Trim(false);
+            
+            if (userText.IsEmpty()) {
+                userText = wxString::FromUTF8(labels[i].c_str());
+            }
+
+            wxString hexColor = defaultColors[i].GetAsString(wxC2S_HTML_SYNTAX);
+
             bool ignoreSize = entries[i].ignoreSizeCheckBox->GetValue();
 
-            if (text.IsEmpty()) {
-                text = wxString::FromUTF8(labels[i].c_str());
-                ignoreSize = true;
+            wxString sizeStr = entries[i].sizeField->GetValue().Trim().Trim(false);
+            if (sizeStr.IsEmpty()) {
+                sizeStr = "90";
             }
 
-            if (ignoreSize) {
-                entryContent = wxString::Format("<color=%s>%s</color>",
-                    color.GetAsString(wxC2S_HTML_SYNTAX), text);
+            if (!ignoreSize) {
+                output << "<color=" << hexColor << "><size=" << sizeStr << ">" << userText << "</size></color>\n";
             } else {
-                long sizeValue = 90;
-                try {
-                    sizeValue = std::stol(sizeStr.ToStdString());
-                }
-                catch (const std::exception&) {
-                    sizeValue = 90;
-                }
-                entryContent = wxString::Format("<color=%s><size=%ld>%s</size></color>",
-                    color.GetAsString(wxC2S_HTML_SYNTAX), sizeValue, text);
+                output << "<color=" << hexColor << ">" << userText << "</color>\n";
             }
         }
-
-        output += entryContent + "\n";
     }
 
     wxFileDialog saveFileDialog(
@@ -279,15 +262,15 @@ void TabOne::OnSaveButtonClicked(wxCommandEvent& event) {
     }
 
     wxString filePath = saveFileDialog.GetPath();
-
-    wxFileOutputStream outputStream(filePath);
-    if (!outputStream.IsOk()) {
-        wxMessageBox("Failed to save the file at:\n" + filePath, "Error", wxOK | wxICON_ERROR);
+    wxFile file;
+    if (!file.Create(filePath, true)) {
+        wxMessageBox("Couldn't create text file", "Erro", wxOK | wxICON_ERROR);
         return;
     }
 
-    wxTextOutputStream textStream(outputStream, wxEOL_NATIVE, wxConvUTF8);
-    textStream.WriteString(output);
+    auto utf8Data = output.utf8_str();
+    file.Write(utf8Data.data(), utf8Data.length());
+    file.Close();
 
-    wxMessageBox("File saved successfully at:\n" + filePath, "Success", wxOK | wxICON_INFORMATION);
+    wxMessageBox("Text file saved!", "Sucesso", wxOK | wxICON_INFORMATION);
 }
